@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="bg-[#f8fafc]">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PerfumeCloud Pro</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: { primary: '#0f172a', accent: '#3b82f6' }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+    <style type="text/tailwindcss">
+        body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
+        .slide-enter-active, .slide-leave-active { transition: transform 0.3s ease-in-out; }
+        .slide-enter-from, .slide-leave-to { transform: translateX(-100%); }
+        .scale-enter-active, .scale-leave-active { transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .scale-enter-from, .scale-leave-to { opacity: 0; transform: scale(0.95); }
+        .input-soft { @apply w-full bg-gray-50 border-none rounded-2xl py-4 px-5 text-gray-700 font-medium focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all placeholder-gray-400 text-center; }
+        .input-modal { @apply w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-gray-800 font-semibold focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all; }
+        .btn-primary { @apply bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-md hover:shadow-blue-500/30 transition-all transform hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2; }
+        .btn-cancel { @apply bg-slate-100 text-slate-500 font-bold py-3 px-6 rounded-xl hover:bg-slate-200 hover:text-slate-700 transition-all active:scale-95 flex items-center justify-center gap-2 border border-transparent; }
+        .btn-action-edit { @apply w-9 h-9 rounded-lg flex items-center justify-center bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all shadow-sm active:scale-95; }
+        .btn-action-delete { @apply w-9 h-9 rounded-lg flex items-center justify-center bg-red-50 text-red-500 hover:bg-red-100 transition-all shadow-sm active:scale-95; }
+        .badge-insp { @apply text-[10px] uppercase font-bold tracking-wider px-2 py-1 rounded-md bg-purple-50 text-purple-600 border border-purple-100 inline-block max-w-[120px] truncate; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    </style>
+</head>
+
+<body class="text-gray-600 bg-[#f8fafc] h-screen flex overflow-hidden">
+
+    <div id="app" class="w-full flex h-full relative">
+        <div v-if="menuAberto" @click="menuAberto = false" class="fixed inset-0 bg-black/20 z-20 lg:hidden backdrop-blur-sm"></div>
+
+        <aside v-show="menuAberto || !isMobile" class="fixed lg:static inset-y-0 left-0 w-64 bg-white border-r border-gray-100 z-30 flex flex-col h-full shadow-xl lg:shadow-none">
+            <div class="p-8 flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg"><i class="fa-solid fa-cloud"></i></div>
+                <span class="font-bold text-gray-800 tracking-tight text-lg">PerfumeCloud</span>
+            </div>
+            <nav class="flex-1 px-4 space-y-2 mt-4">
+                <a href="#" @click.prevent="navegar('dashboard')" :class="telaAtual === 'dashboard' ? 'bg-blue-50 text-blue-700' : 'text-gray-500'" class="flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-semibold transition-all"><i class="fa-solid fa-chart-pie w-5"></i> Dashboard</a>
+                <a href="#" @click.prevent="navegar('vender')" :class="telaAtual === 'vender' ? 'bg-emerald-50 text-emerald-700' : 'text-gray-500'" class="flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-semibold transition-all"><i class="fa-solid fa-cash-register w-5"></i> Vender</a>
+                <a href="#" @click.prevent="navegar('produtos')" :class="telaAtual === 'produtos' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-500'" class="flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-semibold transition-all"><i class="fa-solid fa-list w-5"></i> Estoque</a>
+                <a href="#" @click.prevent="navegar('historico')" :class="telaAtual === 'historico' ? 'bg-purple-50 text-purple-700' : 'text-gray-500'" class="flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-semibold transition-all"><i class="fa-solid fa-clock-rotate-left w-5"></i> Histórico</a>
+            </nav>
+        </aside>
+
+        <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+            <header class="lg:hidden h-16 bg-white border-b border-gray-100 flex items-center px-4 justify-between shrink-0">
+                <button @click="menuAberto = true" class="text-gray-500 p-2"><i class="fa-solid fa-bars text-xl"></i></button>
+                <span class="font-bold text-gray-800">PerfumeCloud</span>
+                <div class="w-8"></div>
+            </header>
+
+            <div class="flex-1 overflow-y-auto p-4 lg:p-8 bg-[#f8fafc]">
+                <div class="max-w-6xl mx-auto">
+                    <div v-if="loading" class="fixed top-4 right-4 bg-white px-5 py-3 rounded-full shadow-xl z-50 flex items-center gap-3 text-sm font-medium"><i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i>Processando...</div>
+
+                    <div v-show="telaAtual === 'dashboard'" class="animate-fade-in space-y-8">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm"><p class="text-xs text-emerald-600 font-bold uppercase mb-1">Lucro Total</p><p class="text-3xl font-bold text-gray-900">{{ formatarMoeda(kpis.lucro) }}</p></div>
+                            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm"><p class="text-xs text-blue-600 font-bold uppercase mb-1">Faturamento</p><p class="text-3xl font-bold text-gray-900">{{ formatarMoeda(kpis.faturamento) }}</p></div>
+                            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm"><p class="text-xs text-purple-600 font-bold uppercase mb-1">Vendas</p><p class="text-3xl font-bold text-gray-900">{{ kpis.qtdVendas }}</p></div>
+                        </div>
+                        <div class="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm flex flex-col lg:flex-row items-center gap-12">
+                            <div class="w-64 h-64 relative shrink-0"><canvas id="pieChart"></canvas></div>
+                            <div class="flex-1 w-full">
+                                <h3 class="text-lg font-bold text-gray-800 mb-6">Top Produtos (Lucro)</h3>
+                                <div class="space-y-3">
+                                    <div v-for="(item, idx) in dashboardData.topProdutos" :key="idx" class="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50">
+                                        <div class="flex items-center gap-3"><div class="w-3 h-3 rounded-full" :style="{backgroundColor: dashboardData.cores[idx]}"></div><span class="font-medium text-gray-700">{{ item.nome }}</span></div>
+                                        <span class="font-bold text-gray-900">{{ formatarMoeda(item.valor) }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-show="telaAtual === 'vender'" class="animate-fade-in flex flex-col items-center justify-center min-h-[60vh]">
+                        <div class="w-full max-w-md bg-white p-8 rounded-[2rem] shadow-xl border border-gray-100 space-y-6">
+                            <h2 class="text-2xl font-bold text-center text-gray-800">Venda Rápida</h2>
+                            <div class="space-y-4">
+                                <div><label class="text-xs font-bold text-gray-400 uppercase block mb-1">Produto</label>
+                                    <select v-model="vendaInput.produtoId" class="input-soft"><option value="" disabled>Selecione...</option><option v-for="p in produtos" :value="p.id">{{ p.nome }}</option></select>
+                                </div>
+                                <div class="text-center">
+                                    <label class="text-xs font-bold text-gray-400 uppercase block mb-1">Preço Venda</label>
+                                    <div class="flex items-baseline justify-center gap-1 text-gray-800"><span class="text-2xl font-bold">R$</span><input v-model.number="vendaInput.precoVenda" type="number" step="0.01" class="text-5xl font-black bg-transparent border-none text-center w-48 outline-none" placeholder="0,00"></div>
+                                </div>
+                                <div class="flex flex-col items-center">
+                                    <label class="text-xs font-bold text-gray-400 uppercase block mb-2">Quantidade</label>
+                                    <div class="flex gap-4 bg-gray-50 p-2 rounded-xl">
+                                        <button @click="vendaInput.quantidade > 1 ? vendaInput.quantidade-- : null" class="w-10 h-10 bg-white rounded-lg shadow-sm">-</button>
+                                        <span class="w-10 flex items-center justify-center font-bold text-xl">{{ vendaInput.quantidade }}</span>
+                                        <button @click="vendaInput.quantidade++" class="w-10 h-10 bg-white rounded-lg shadow-sm">+</button>
+                                    </div>
+                                </div>
+                                <button @click="confirmarVenda" :disabled="!vendaInput.produtoId || !vendaInput.precoVenda" class="btn-primary w-full py-4 text-lg">Confirmar Venda</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-show="telaAtual === 'produtos'" class="animate-fade-in">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-bold text-gray-800">Estoque</h2>
+                            <button @click="abrirModalNovo" class="btn-primary py-2.5 px-5"><i class="fa-solid fa-plus"></i> Novo Item</button>
+                        </div>
+                        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-50 text-gray-500 uppercase text-xs font-bold border-b">
+                                    <tr><th class="py-5 px-6">Produto</th><th class="py-5 px-6">Inspiração</th><th class="py-5 px-6 text-right">Custo</th><th class="py-5 px-6 text-right text-orange-600">Sugerido ML</th><th class="py-5 px-6 text-center">Ação</th></tr>
+                                </thead>
+                                <tbody class="divide-y">
+                                    <tr v-for="prod in produtos" :key="prod.id" class="hover:bg-gray-50 transition-colors">
+                                        <td class="py-4 px-6 text-sm font-semibold text-gray-700">{{ prod.nome }}</td>
+                                        <td class="py-4 px-6"><span class="badge-insp">{{ prod.inspiracao }}</span></td>
+                                        <td class="py-4 px-6 text-sm text-right">{{ formatarMoeda(prod.custo) }}</td>
+                                        <td class="py-4 px-6 text-sm font-bold text-orange-600 text-right">{{ formatarMoeda(prod.preco_suger_ml) }}</td>
+                                        <td class="py-4 px-6 text-center">
+                                            <div class="flex justify-center gap-2">
+                                                <button @click="abrirModalEdicao(prod)" class="btn-action-edit"><i class="fa-solid fa-pen"></i></button>
+                                                <button @click="removerProduto(prod.id)" class="btn-action-delete"><i class="fa-solid fa-trash-can"></i></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div v-show="telaAtual === 'historico'" class="animate-fade-in">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-6">Histórico de Vendas</h2>
+                        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-50 text-gray-500 uppercase text-xs font-bold border-b">
+                                    <tr><th class="py-5 px-6">Data</th><th class="py-5 px-6">Produto</th><th class="py-5 px-6 text-center">Qtd</th><th class="py-5 px-6 text-right">Lucro</th><th class="py-5 px-6 text-center">Ações</th></tr>
+                                </thead>
+                                <tbody class="divide-y">
+                                    <tr v-for="venda in vendas" :key="venda.id" class="hover:bg-gray-50">
+                                        <td class="py-4 px-6 text-sm text-gray-500">{{ new Date(venda.created_at).toLocaleDateString() }}</td>
+                                        <td class="py-4 px-6 text-sm font-medium text-gray-800">{{ venda.nome_produto_snapshot }}</td>
+                                        <td class="py-4 px-6 text-sm text-center">{{ venda.quantidade }}</td>
+                                        <td class="py-4 px-6 text-sm text-right font-bold text-emerald-600">{{ formatarMoeda(venda.lucro_liquido) }}</td>
+                                        <td class="py-4 px-6 text-center"><button @click="removerVenda(venda.id)" class="text-gray-300 hover:text-red-500"><i class="fa-solid fa-xmark"></i></button></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <transition name="fade">
+            <div v-if="modalAberto" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                <div @click.self="modalAberto = false" class="absolute inset-0"></div>
+                <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 relative z-10 animate-scale">
+                    <h3 class="text-2xl font-bold text-gray-800 text-center mb-6">{{ tituloModal }}</h3>
+                    <div class="space-y-4">
+                        <div><label class="text-xs font-bold text-gray-400 uppercase block mb-1">Nome</label><input v-model="novoProduto.nome" type="text" class="input-modal"></div>
+                        <div><label class="text-xs font-bold text-gray-400 uppercase block mb-1">Inspiração</label><input v-model="novoProduto.inspiracao" type="text" class="input-modal"></div>
+                        <div><label class="text-xs font-bold text-gray-400 uppercase block mb-1">Custo (R$)</label><input v-model.number="novoProduto.custo" type="number" step="0.01" class="input-modal"></div>
+                        <div><label class="text-xs font-bold text-orange-500 uppercase block mb-1">Sugerido ML (R$)</label><input v-model.number="novoProduto.preco_suger_ml" type="number" step="0.01" class="input-modal border-orange-100"></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 mt-8"><button @click="modalAberto = false" class="btn-cancel">Cancelar</button><button @click="salvarProduto" class="btn-primary">Salvar</button></div>
+                </div>
+            </div>
+        </transition>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+        const { createClient } = supabase;
+
+        const SUPABASE_URL = 'https://ucnielenhniqsgvfmygl.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_Q2-vD5bsPeejn0INaao1gA_XqvYhd96';
+        const _supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        createApp({
+            data() {
+                return {
+                    loading: false, menuAberto: false, modalAberto: false, telaAtual: 'dashboard', isMobile: window.innerWidth < 1024,
+                    produtos: [], vendas: [], dashboardData: { topProdutos: [], cores: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'] },
+                    novoProduto: { id: null, nome: '', custo: null, inspiracao: '', preco_suger_ml: null },
+                    vendaInput: { produtoId: '', precoVenda: null, quantidade: 1 },
+                    pieChartInstance: null
+                }
+            },
+            computed: {
+                tituloModal() { return this.novoProduto.id ? 'Editar Perfume' : 'Novo Perfume'; },
+                kpis() {
+                    const luc = this.vendas.reduce((a, v) => a + (v.lucro_liquido || 0), 0);
+                    const fat = this.vendas.reduce((a, v) => a + (v.faturamento_total || 0), 0);
+                    return { lucro: luc, faturamento: fat, qtdVendas: this.vendas.length };
+                },
+                produtoSelecionado() { return this.produtos.find(p => p.id === this.vendaInput.produtoId); }
+            },
+            methods: {
+                formatarMoeda(v) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0); },
+                navegar(t) { this.telaAtual = t; if(this.isMobile) this.menuAberto = false; if(t === 'dashboard') setTimeout(() => this.atualizarGrafico(), 300); },
+                async carregarTudo() {
+                    this.loading = true;
+                    try {
+                        const { data: p } = await _supabase.from('produtos').select('*').order('nome');
+                        this.produtos = p || [];
+                        const { data: v } = await _supabase.from('vendas').select('*').order('created_at', { ascending: false });
+                        this.vendas = v || [];
+                        if(this.telaAtual === 'dashboard') this.atualizarGrafico();
+                    } catch(e) { console.error(e); } finally { this.loading = false; }
+                },
+                abrirModalNovo() { this.novoProduto = { id: null, nome: '', custo: null, inspiracao: '', preco_suger_ml: null }; this.modalAberto = true; },
+                abrirModalEdicao(p) { this.novoProduto = { ...p }; this.modalAberto = true; },
+                async salvarProduto() {
+                    this.loading = true;
+                    if (this.novoProduto.id) await _supabase.from('produtos').update(this.novoProduto).eq('id', this.novoProduto.id);
+                    else await _supabase.from('produtos').insert([this.novoProduto]);
+                    this.modalAberto = false; await this.carregarTudo();
+                },
+                async removerProduto(id) { if(confirm('Excluir produto?')) { await _supabase.from('produtos').delete().eq('id', id); await this.carregarTudo(); } },
+                async confirmarVenda() {
+                    this.loading = true;
+                    const lucro = (this.vendaInput.precoVenda * this.vendaInput.quantidade) - (this.produtoSelecionado.custo * this.vendaInput.quantidade) - (60 * this.vendaInput.quantidade);
+                    await _supabase.from('vendas').insert([{
+                        produto_id: this.vendaInput.produtoId,
+                        nome_produto_snapshot: this.produtoSelecionado.nome,
+                        quantidade: this.vendaInput.quantidade,
+                        faturamento_total: this.vendaInput.precoVenda * this.vendaInput.quantidade,
+                        lucro_liquido: lucro
+                    }]);
+                    this.vendaInput = { produtoId: '', precoVenda: null, quantidade: 1 };
+                    await this.carregarTudo();
+                    alert("Venda registrada!");
+                },
+                async removerVenda(id) { if(confirm('Apagar venda?')) { await _supabase.from('vendas').delete().eq('id', id); await this.carregarTudo(); } },
+                atualizarGrafico() {
+                    const ctx = document.getElementById('pieChart');
+                    if(!ctx || this.vendas.length === 0) return;
+                    if(this.pieChartInstance) this.pieChartInstance.destroy();
+                    const grupos = {};
+                    this.vendas.forEach(v => { grupos[v.nome_produto_snapshot] = (grupos[v.nome_produto_snapshot] || 0) + v.lucro_liquido; });
+                    const sorted = Object.entries(grupos).sort((a,b) => b[1]-a[1]).slice(0, 5);
+                    this.dashboardData.topProdutos = sorted.map(s => ({ nome: s[0], valor: s[1] }));
+                    this.pieChartInstance = new Chart(ctx, { type: 'doughnut', data: { labels: sorted.map(s=>s[0]), datasets: [{ data: sorted.map(s=>s[1]), backgroundColor: this.dashboardData.cores }] }, options: { plugins: { legend: { display: false } }, cutout: '70%' } });
+                }
+            },
+            mounted() { this.carregarTudo(); window.addEventListener('resize', () => { this.isMobile = window.innerWidth < 1024; }); }
+        }).mount('#app');
+    </script>
+</body>
+</html>
