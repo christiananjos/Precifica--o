@@ -39,6 +39,7 @@
         .btn-danger { @apply bg-red-500 text-white font-bold py-3 px-6 rounded-xl shadow-md hover:bg-red-600 transition-all active:scale-95 flex items-center justify-center gap-2; }
         .btn-action-edit { @apply w-9 h-9 rounded-lg flex items-center justify-center bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all shadow-sm active:scale-95; }
         .btn-action-delete { @apply w-9 h-9 rounded-lg flex items-center justify-center bg-red-50 text-red-500 hover:bg-red-100 transition-all shadow-sm active:scale-95; }
+        .btn-page { @apply w-10 h-10 rounded-xl flex items-center justify-center font-bold transition-all border border-gray-200 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed active:scale-90; }
         .badge-insp { @apply text-[10px] uppercase font-bold tracking-wider px-2 py-1 rounded-md bg-purple-50 text-purple-600 border border-purple-100 inline-block max-w-[120px] truncate; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
@@ -122,42 +123,61 @@
 
                         <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div class="relative">
-                                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-300"></i>
-                                <input v-model="filtrosEstoque.termo" type="text" placeholder="Nome ou Inspiração..." class="input-filter pl-10">
+                                <input v-model="filtrosEstoque.termo" type="text" placeholder="Nome ou Inspiração..." class="input-filter pl-10" @input="currentPage = 1">
                             </div>
                             <div class="relative">
-                                <i class="fa-solid fa-tag absolute left-3 top-1/2 -translate-y-1/2 text-gray-300"></i>
-                                <input v-model.number="filtrosEstoque.precoMax" type="number" placeholder="Preço máximo (Custo)..." class="input-filter pl-10">
+                                <input v-model.number="filtrosEstoque.precoMax" type="number" placeholder="Preço máximo (Custo)..." class="input-filter pl-10" @input="currentPage = 1">
                             </div>
                             <div class="flex items-center gap-2">
                                 <button @click="limparFiltros" class="text-xs font-bold text-blue-500 hover:text-blue-700 uppercase tracking-wider px-2 py-1">Limpar Filtros</button>
-                                <span class="text-xs text-gray-400 ml-auto">{{ produtosFiltrados.length }} itens encontrados</span>
+                                <span class="text-xs text-gray-400 ml-auto">{{ produtosFiltrados.length }} total</span>
                             </div>
                         </div>
 
-                        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                            <table class="w-full text-left">
-                                <thead class="bg-gray-50 text-gray-500 uppercase text-xs font-bold border-b">
-                                    <tr><th class="py-5 px-6">Produto</th><th class="py-5 px-6">Inspiração</th><th class="py-5 px-6 text-right">Custo</th><th class="py-5 px-6 text-right text-orange-600">Sugerido ML</th><th class="py-5 px-6 text-center">Ação</th></tr>
-                                </thead>
-                                <tbody class="divide-y">
-                                    <tr v-for="prod in produtosFiltrados" :key="prod.id" class="hover:bg-gray-50 transition-colors">
-                                        <td class="py-4 px-6 text-sm font-semibold text-gray-700">{{ prod.nome }}</td>
-                                        <td class="py-4 px-6"><span class="badge-insp">{{ prod.inspiracao }}</span></td>
-                                        <td class="py-4 px-6 text-sm text-right">{{ formatarMoeda(prod.custo) }}</td>
-                                        <td class="py-4 px-6 text-sm font-bold text-orange-600 text-right">{{ formatarMoeda(prod.preco_suger_ml) }}</td>
-                                        <td class="py-4 px-6 text-center">
-                                            <div class="flex justify-center gap-2">
-                                                <button @click="abrirModalEdicao(prod)" class="btn-action-edit"><i class="fa-solid fa-pen"></i></button>
-                                                <button @click="solicitarExclusaoProduto(prod.id)" class="btn-action-delete"><i class="fa-solid fa-trash-can"></i></button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr v-if="produtosFiltrados.length === 0">
-                                        <td colspan="5" class="py-12 text-center text-gray-400 italic">Nenhum perfume encontrado com esses filtros.</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left">
+                                    <thead class="bg-gray-50 text-gray-500 uppercase text-xs font-bold border-b">
+                                        <tr><th class="py-5 px-6">Produto</th><th class="py-5 px-6">Inspiração</th><th class="py-5 px-6 text-right">Custo</th><th class="py-5 px-6 text-right text-orange-600">Sugerido ML</th><th class="py-5 px-6 text-center">Ação</th></tr>
+                                    </thead>
+                                    <tbody class="divide-y">
+                                        <tr v-for="prod in produtosPaginados" :key="prod.id" class="hover:bg-gray-50 transition-colors">
+                                            <td class="py-4 px-6 text-sm font-semibold text-gray-700">{{ prod.nome }}</td>
+                                            <td class="py-4 px-6"><span class="badge-insp">{{ prod.inspiracao }}</span></td>
+                                            <td class="py-4 px-6 text-sm text-right">{{ formatarMoeda(prod.custo) }}</td>
+                                            <td class="py-4 px-6 text-sm font-bold text-orange-600 text-right">{{ formatarMoeda(prod.preco_suger_ml) }}</td>
+                                            <td class="py-4 px-6 text-center">
+                                                <div class="flex justify-center gap-2">
+                                                    <button @click="abrirModalEdicao(prod)" class="btn-action-edit"><i class="fa-solid fa-pen"></i></button>
+                                                    <button @click="solicitarExclusaoProduto(prod.id)" class="btn-action-delete"><i class="fa-solid fa-trash-can"></i></button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr v-if="produtosFiltrados.length === 0">
+                                            <td colspan="5" class="py-12 text-center text-gray-400 italic">Nenhum perfume encontrado.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div v-if="totalPages > 1" class="p-4 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between">
+                                <div class="text-xs text-gray-400 font-medium">
+                                    Mostrando {{ itemsRange }} de {{ produtosFiltrados.length }} itens
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button @click="mudarPagina(-1)" :disabled="currentPage === 1" class="btn-page">
+                                        <i class="fa-solid fa-chevron-left text-xs"></i>
+                                    </button>
+                                    <div class="flex items-center gap-1 px-3">
+                                        <span class="text-sm font-bold text-gray-800">{{ currentPage }}</span>
+                                        <span class="text-sm text-gray-400">/</span>
+                                        <span class="text-sm text-gray-400">{{ totalPages }}</span>
+                                    </div>
+                                    <button @click="mudarPagina(1)" :disabled="currentPage === totalPages" class="btn-page">
+                                        <i class="fa-solid fa-chevron-right text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -242,7 +262,8 @@
                     produtos: [], vendas: [], dashboardData: { topProdutos: [], cores: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'] },
                     novoProduto: { id: null, nome: '', custo: null, inspiracao: '', preco_suger_ml: null },
                     vendaInput: { produtoId: '', precoVenda: null, quantidade: 1, precoUnitarioBase: 0 },
-                    filtrosEstoque: { termo: '', precoMax: null }, // NOVO ESTADO DE FILTRO
+                    filtrosEstoque: { termo: '', precoMax: null },
+                    currentPage: 1, itemsPerPage: 10, // NOVO ESTADO PAGINACAO
                     pieChartInstance: null,
                     feedback: { aberto: false, titulo: '', mensagem: '' },
                     confirmDialog: { aberto: false, mensagem: '', acaoConfirmada: null }
@@ -251,7 +272,7 @@
             computed: {
                 tituloModal() { return this.novoProduto.id ? 'Editar Perfume' : 'Novo Perfume'; },
                 
-                // LÓGICA DE FILTRAGEM DINÂMICA
+                // FILTRO DINÂMICO
                 produtosFiltrados() {
                     return this.produtos.filter(p => {
                         const termoOk = !this.filtrosEstoque.termo || 
@@ -260,6 +281,18 @@
                         const precoOk = !this.filtrosEstoque.precoMax || p.custo <= this.filtrosEstoque.precoMax;
                         return termoOk && precoOk;
                     });
+                },
+
+                // LÓGICA DE PAGINAÇÃO COMPUTADA
+                totalPages() { return Math.ceil(this.produtosFiltrados.length / this.itemsPerPage) || 1; },
+                produtosPaginados() {
+                    const start = (this.currentPage - 1) * this.itemsPerPage;
+                    return this.produtosFiltrados.slice(start, start + this.itemsPerPage);
+                },
+                itemsRange() {
+                    const start = (this.currentPage - 1) * this.itemsPerPage + 1;
+                    const end = Math.min(this.currentPage * this.itemsPerPage, this.produtosFiltrados.length);
+                    return `${start}-${end}`;
                 },
 
                 kpis() {
@@ -273,9 +306,17 @@
                 formatarMoeda(v) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0); },
                 navegar(t) { this.telaAtual = t; if(this.isMobile) this.menuAberto = false; if(t === 'dashboard') setTimeout(() => this.atualizarGrafico(), 300); },
                 
+                mudarPagina(direcao) {
+                    const novaPagina = this.currentPage + direcao;
+                    if(novaPagina >= 1 && novaPagina <= this.totalPages) {
+                        this.currentPage = novaPagina;
+                    }
+                },
+
                 limparFiltros() {
                     this.filtrosEstoque.termo = '';
                     this.filtrosEstoque.precoMax = null;
+                    this.currentPage = 1;
                 },
 
                 mostrarFeedback(titulo, msg) { this.feedback = { aberto: true, titulo, mensagem: msg }; },
@@ -308,19 +349,18 @@
                     if (this.novoProduto.id) await _supabase.from('produtos').update(this.novoProduto).eq('id', this.novoProduto.id);
                     else await _supabase.from('produtos').insert([this.novoProduto]);
                     this.modalAberto = false; await this.carregarTudo();
-                    this.mostrarFeedback('Sucesso!', 'Produto salvo no estoque.');
+                    this.mostrarFeedback('Sucesso!', 'Dados salvos.');
                 },
 
                 solicitarExclusaoProduto(id) {
                     this.confirmDialog = {
                         aberto: true,
-                        mensagem: 'Isso removerá o perfume do estoque definitivamente.',
+                        mensagem: 'Isso removerá o perfume do estoque.',
                         acaoConfirmada: async () => {
                             this.confirmDialog.aberto = false;
                             this.loading = true;
                             await _supabase.from('produtos').delete().eq('id', id);
                             await this.carregarTudo();
-                            this.mostrarFeedback('Removido', 'Produto excluído.');
                         }
                     };
                 },
@@ -343,7 +383,7 @@
                 solicitarExclusaoVenda(id) {
                     this.confirmDialog = {
                         aberto: true,
-                        mensagem: 'Deseja apagar esta venda do histórico?',
+                        mensagem: 'Deseja apagar esta venda?',
                         acaoConfirmada: async () => {
                             this.confirmDialog.aberto = false;
                             this.loading = true;
