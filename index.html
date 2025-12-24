@@ -18,6 +18,7 @@
         }
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -120,44 +121,31 @@
                             <h2 class="text-2xl font-bold text-gray-800">Estoque</h2>
                             <button @click="abrirModalNovo" class="btn-primary py-2.5 px-5"><i class="fa-solid fa-plus"></i> Novo Item</button>
                         </div>
-
                         <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div class="relative">
-                                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-300"></i>
-                                <input v-model="filtrosEstoque.termo" type="text" placeholder="Nome ou Inspiração..." class="input-filter pl-10" @input="currentPage = 1">
-                            </div>
-                            <div class="relative">
-                                <i class="fa-solid fa-tag absolute left-3 top-1/2 -translate-y-1/2 text-gray-300"></i>
-                                <input v-model.number="filtrosEstoque.precoMax" type="number" placeholder="Preço máximo (Custo)..." class="input-filter pl-10" @input="currentPage = 1">
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <button @click="limparFiltros" class="text-xs font-bold text-blue-500 hover:text-blue-700 uppercase tracking-wider px-2 py-1">Limpar Filtros</button>
-                                <span class="text-xs text-gray-400 ml-auto">{{ produtosFiltrados.length }} total</span>
-                            </div>
+                            <div class="relative"><i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-300"></i><input v-model="filtrosEstoque.termo" type="text" placeholder="Nome ou Inspiração..." class="input-filter pl-10" @input="currentPage = 1"></div>
+                            <div class="relative"><i class="fa-solid fa-tag absolute left-3 top-1/2 -translate-y-1/2 text-gray-300"></i><input v-model.number="filtrosEstoque.precoMax" type="number" placeholder="Preço máximo..." class="input-filter pl-10" @input="currentPage = 1"></div>
+                            <div class="flex items-center gap-2"><button @click="limparFiltros" class="text-xs font-bold text-blue-500 uppercase tracking-wider">Limpar</button><span class="text-xs text-gray-400 ml-auto">{{ produtosFiltrados.length }} total</span></div>
                         </div>
-
                         <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-left">
-                                    <thead class="bg-gray-50 text-gray-500 uppercase text-xs font-bold border-b">
-                                        <tr><th class="py-5 px-6">Produto</th><th class="py-5 px-6">Inspiração</th><th class="py-5 px-6 text-right">Custo</th><th class="py-5 px-6 text-right text-orange-600">Sugerido ML</th><th class="py-5 px-6 text-center">Ação</th></tr>
-                                    </thead>
-                                    <tbody class="divide-y">
-                                        <tr v-for="prod in produtosPaginados" :key="prod.id" class="hover:bg-gray-50 transition-colors">
-                                            <td class="py-4 px-6 text-sm font-semibold text-gray-700">{{ prod.nome }}</td>
-                                            <td class="py-4 px-6"><span class="badge-insp">{{ prod.inspiracao }}</span></td>
-                                            <td class="py-4 px-6 text-sm text-right">{{ formatarMoeda(prod.custo) }}</td>
-                                            <td class="py-4 px-6 text-sm font-bold text-orange-600 text-right">{{ formatarMoeda(prod.preco_suger_ml) }}</td>
-                                            <td class="py-4 px-6 text-center">
-                                                <div class="flex justify-center gap-2">
-                                                    <button @click="abrirModalEdicao(prod)" class="btn-action-edit"><i class="fa-solid fa-pen"></i></button>
-                                                    <button @click="solicitarExclusaoProduto(prod.id)" class="btn-action-delete"><i class="fa-solid fa-trash-can"></i></button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-50 text-gray-500 uppercase text-xs font-bold border-b">
+                                    <tr><th class="py-5 px-6">Produto</th><th class="py-5 px-6">Inspiração</th><th class="py-5 px-6 text-right">Custo</th><th class="py-5 px-6 text-right text-orange-600">Sugerido ML</th><th class="py-5 px-6 text-center">Ação</th></tr>
+                                </thead>
+                                <tbody class="divide-y">
+                                    <tr v-for="prod in produtosPaginados" :key="prod.id" class="hover:bg-gray-50 transition-colors">
+                                        <td class="py-4 px-6 text-sm font-semibold text-gray-700">{{ prod.nome }}</td>
+                                        <td class="py-4 px-6"><span class="badge-insp">{{ prod.inspiracao }}</span></td>
+                                        <td class="py-4 px-6 text-sm text-right">{{ formatarMoeda(prod.custo) }}</td>
+                                        <td class="py-4 px-6 text-sm font-bold text-orange-600 text-right">{{ formatarMoeda(prod.preco_suger_ml) }}</td>
+                                        <td class="py-4 px-6 text-center">
+                                            <div class="flex justify-center gap-2">
+                                                <button @click="abrirModalEdicao(prod)" class="btn-action-edit"><i class="fa-solid fa-pen"></i></button>
+                                                <button @click="solicitarExclusaoProduto(prod.id)" class="btn-action-delete"><i class="fa-solid fa-trash-can"></i></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                             <div v-if="totalPages > 1" class="p-4 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between">
                                 <div class="text-xs text-gray-400">Mostrando {{ itemsRange }} de {{ produtosFiltrados.length }}</div>
                                 <div class="flex items-center gap-2">
@@ -239,6 +227,7 @@
         const { createApp } = Vue;
         const { createClient } = supabase;
 
+        // --- SUAS CHAVES DO SUPABASE ---
         const SUPABASE_URL = 'https://ucnielenhniqsgvfmygl.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_Q2-vD5bsPeejn0INaao1gA_XqvYhd96';
         const _supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -290,7 +279,6 @@
                 limparFiltros() { this.filtrosEstoque.termo = ''; this.filtrosEstoque.precoMax = null; this.currentPage = 1; },
                 mostrarFeedback(titulo, msg) { this.feedback = { aberto: true, titulo, mensagem: msg }; },
                 
-                // FUNÇÕES DO MODAL
                 abrirModalNovo() { this.novoProduto = { id: null, nome: '', custo: null, inspiracao: '', preco_suger_ml: null }; this.modalAberto = true; },
                 abrirModalEdicao(p) { this.novoProduto = { ...p }; this.modalAberto = true; },
                 
@@ -313,28 +301,63 @@
                         this.produtos = p || [];
                         const { data: v } = await _supabase.from('vendas').select('*').order('created_at', { ascending: false });
                         this.vendas = v || [];
+                        if(this.telaAtual === 'dashboard') this.atualizarGrafico();
                     } catch(e) { console.error(e); } finally { this.loading = false; }
                 },
                 async salvarProduto() {
                     if(!this.novoProduto.nome || !this.novoProduto.custo) return;
                     this.loading = true;
-                    if (this.novoProduto.id) await _supabase.from('produtos').update(this.novoProduto).eq('id', this.novoProduto.id);
-                    else await _supabase.from('produtos').insert([this.novoProduto]);
-                    this.modalAberto = false; await this.carregarTudo();
-                    this.mostrarFeedback('Sucesso!', 'Produto salvo no estoque.');
+                    try {
+                        if (this.novoProduto.id) await _supabase.from('produtos').update(this.novoProduto).eq('id', this.novoProduto.id);
+                        else await _supabase.from('produtos').insert([this.novoProduto]);
+                        this.modalAberto = false; await this.carregarTudo();
+                        this.mostrarFeedback('Sucesso!', 'Os dados do perfume foram salvos no estoque.');
+                    } catch(e) { console.error(e); } finally { this.loading = false; }
                 },
                 solicitarExclusaoProduto(id) {
                     this.confirmDialog = { aberto: true, mensagem: 'Isso removerá o perfume definitivamente.', acaoConfirmada: async () => { this.confirmDialog.aberto = false; this.loading = true; await _supabase.from('produtos').delete().eq('id', id); await this.carregarTudo(); } };
                 },
+
+                // --- FUNÇÃO DE VENDA CORRIGIDA PARA O ERRO NOT-NULL ---
                 async confirmarVenda() {
+                    if (!this.vendaInput.produtoId || !this.vendaInput.precoVenda || !this.produtoSelecionado) {
+                        this.mostrarFeedback('Atenção', 'Selecione um produto e insira o valor da venda.');
+                        return;
+                    }
+
                     this.loading = true;
-                    const custoTotal = (this.produtoSelecionado.custo || 0) * this.vendaInput.quantidade;
-                    const lucro = this.vendaInput.precoVenda - custoTotal - (60 * this.vendaInput.quantidade);
-                    await _supabase.from('vendas').insert([{ produto_id: this.vendaInput.produtoId, nome_produto_snapshot: this.produtoSelecionado.nome, quantidade: this.vendaInput.quantidade, faturamento_total: this.vendaInput.precoVenda, lucro_liquido: lucro }]);
-                    this.vendaInput = { produtoId: '', precoVenda: null, quantidade: 1, precoUnitarioBase: 0 };
-                    await this.carregarTudo();
-                    this.mostrarFeedback('Venda Registrada!', 'Dashboard atualizado.');
+                    try {
+                        const qtd = Math.max(1, this.vendaInput.quantidade);
+                        const faturamentoTotal = this.vendaInput.precoVenda;
+                        const precoUnitarioVenda = faturamentoTotal / qtd;
+
+                        const custoTotal = (this.produtoSelecionado.custo || 0) * qtd;
+                        const taxaMLTotal = 60 * qtd; // Taxa fixa de 60 reais por unidade
+                        const lucroLiquido = faturamentoTotal - custoTotal - taxaMLTotal;
+
+                        const { error } = await _supabase.from('vendas').insert([{
+                            produto_id: this.vendaInput.produtoId,
+                            nome_produto_snapshot: this.produtoSelecionado.nome,
+                            quantidade: qtd,
+                            preco_venda_unitario: precoUnitarioVenda, // CAMPO CORRIGIDO
+                            faturamento_total: faturamentoTotal,
+                            lucro_liquido: lucroLiquido
+                        }]);
+
+                        if (error) throw error;
+
+                        this.vendaInput = { produtoId: '', precoVenda: null, quantidade: 1, precoUnitarioBase: 0 };
+                        await this.carregarTudo();
+                        this.mostrarFeedback('Venda Registrada!', 'O dashboard foi atualizado com sucesso.');
+
+                    } catch(e) {
+                        console.error("Erro ao salvar:", e);
+                        alert("Erro de banco: " + (e.message || "Erro desconhecido"));
+                    } finally {
+                        this.loading = false;
+                    }
                 },
+
                 solicitarExclusaoVenda(id) {
                     this.confirmDialog = { aberto: true, mensagem: 'Deseja apagar esta venda?', acaoConfirmada: async () => { this.confirmDialog.aberto = false; this.loading = true; await _supabase.from('vendas').delete().eq('id', id); await this.carregarTudo(); } };
                 },
@@ -343,7 +366,7 @@
                     if(!ctx || this.vendas.length === 0) return;
                     if(this.pieChartInstance) this.pieChartInstance.destroy();
                     const grupos = {};
-                    this.vendas.forEach(v => { grupos[v.nome_produto_snapshot] = (grupos[v.nome_produto_snapshot] || 0) + v.lucro_liquido; });
+                    this.vendas.forEach(v => { grupos[v.nome_produto_snapshot] = (grupos[v.nome_produto_snapshot] || 0) + (v.lucro_liquido || 0); });
                     const sorted = Object.entries(grupos).sort((a,b) => b[1]-a[1]).slice(0, 5);
                     this.dashboardData.topProdutos = sorted.map(s => ({ nome: s[0], valor: s[1] }));
                     this.pieChartInstance = new Chart(ctx, { type: 'doughnut', data: { labels: sorted.map(s=>s[0]), datasets: [{ data: sorted.map(s=>s[1]), backgroundColor: this.dashboardData.cores }] }, options: { plugins: { legend: { display: false } }, cutout: '70%' } });
