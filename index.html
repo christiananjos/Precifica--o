@@ -123,9 +123,11 @@
 
                         <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div class="relative">
+                                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-300"></i>
                                 <input v-model="filtrosEstoque.termo" type="text" placeholder="Nome ou Inspiração..." class="input-filter pl-10" @input="currentPage = 1">
                             </div>
                             <div class="relative">
+                                <i class="fa-solid fa-tag absolute left-3 top-1/2 -translate-y-1/2 text-gray-300"></i>
                                 <input v-model.number="filtrosEstoque.precoMax" type="number" placeholder="Preço máximo (Custo)..." class="input-filter pl-10" @input="currentPage = 1">
                             </div>
                             <div class="flex items-center gap-2">
@@ -153,29 +155,15 @@
                                                 </div>
                                             </td>
                                         </tr>
-                                        <tr v-if="produtosFiltrados.length === 0">
-                                            <td colspan="5" class="py-12 text-center text-gray-400 italic">Nenhum perfume encontrado.</td>
-                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
-
                             <div v-if="totalPages > 1" class="p-4 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between">
-                                <div class="text-xs text-gray-400 font-medium">
-                                    Mostrando {{ itemsRange }} de {{ produtosFiltrados.length }} itens
-                                </div>
+                                <div class="text-xs text-gray-400">Mostrando {{ itemsRange }} de {{ produtosFiltrados.length }}</div>
                                 <div class="flex items-center gap-2">
-                                    <button @click="mudarPagina(-1)" :disabled="currentPage === 1" class="btn-page">
-                                        <i class="fa-solid fa-chevron-left text-xs"></i>
-                                    </button>
-                                    <div class="flex items-center gap-1 px-3">
-                                        <span class="text-sm font-bold text-gray-800">{{ currentPage }}</span>
-                                        <span class="text-sm text-gray-400">/</span>
-                                        <span class="text-sm text-gray-400">{{ totalPages }}</span>
-                                    </div>
-                                    <button @click="mudarPagina(1)" :disabled="currentPage === totalPages" class="btn-page">
-                                        <i class="fa-solid fa-chevron-right text-xs"></i>
-                                    </button>
+                                    <button @click="mudarPagina(-1)" :disabled="currentPage === 1" class="btn-page"><i class="fa-solid fa-chevron-left"></i></button>
+                                    <span class="text-sm font-bold px-2">{{ currentPage }} / {{ totalPages }}</span>
+                                    <button @click="mudarPagina(1)" :disabled="currentPage === totalPages" class="btn-page"><i class="fa-solid fa-chevron-right"></i></button>
                                 </div>
                             </div>
                         </div>
@@ -263,7 +251,7 @@
                     novoProduto: { id: null, nome: '', custo: null, inspiracao: '', preco_suger_ml: null },
                     vendaInput: { produtoId: '', precoVenda: null, quantidade: 1, precoUnitarioBase: 0 },
                     filtrosEstoque: { termo: '', precoMax: null },
-                    currentPage: 1, itemsPerPage: 10, // NOVO ESTADO PAGINACAO
+                    currentPage: 1, itemsPerPage: 10,
                     pieChartInstance: null,
                     feedback: { aberto: false, titulo: '', mensagem: '' },
                     confirmDialog: { aberto: false, mensagem: '', acaoConfirmada: null }
@@ -271,19 +259,13 @@
             },
             computed: {
                 tituloModal() { return this.novoProduto.id ? 'Editar Perfume' : 'Novo Perfume'; },
-                
-                // FILTRO DINÂMICO
                 produtosFiltrados() {
                     return this.produtos.filter(p => {
-                        const termoOk = !this.filtrosEstoque.termo || 
-                            p.nome.toLowerCase().includes(this.filtrosEstoque.termo.toLowerCase()) || 
-                            (p.inspiracao && p.inspiracao.toLowerCase().includes(this.filtrosEstoque.termo.toLowerCase()));
+                        const termoOk = !this.filtrosEstoque.termo || p.nome.toLowerCase().includes(this.filtrosEstoque.termo.toLowerCase()) || (p.inspiracao && p.inspiracao.toLowerCase().includes(this.filtrosEstoque.termo.toLowerCase()));
                         const precoOk = !this.filtrosEstoque.precoMax || p.custo <= this.filtrosEstoque.precoMax;
                         return termoOk && precoOk;
                     });
                 },
-
-                // LÓGICA DE PAGINAÇÃO COMPUTADA
                 totalPages() { return Math.ceil(this.produtosFiltrados.length / this.itemsPerPage) || 1; },
                 produtosPaginados() {
                     const start = (this.currentPage - 1) * this.itemsPerPage;
@@ -292,9 +274,8 @@
                 itemsRange() {
                     const start = (this.currentPage - 1) * this.itemsPerPage + 1;
                     const end = Math.min(this.currentPage * this.itemsPerPage, this.produtosFiltrados.length);
-                    return `${start}-${end}`;
+                    return this.produtosFiltrados.length > 0 ? `${start}-${end}` : '0-0';
                 },
-
                 kpis() {
                     const luc = this.vendas.reduce((a, v) => a + (v.lucro_liquido || 0), 0);
                     const fat = this.vendas.reduce((a, v) => a + (v.faturamento_total || 0), 0);
@@ -305,22 +286,14 @@
             methods: {
                 formatarMoeda(v) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0); },
                 navegar(t) { this.telaAtual = t; if(this.isMobile) this.menuAberto = false; if(t === 'dashboard') setTimeout(() => this.atualizarGrafico(), 300); },
-                
-                mudarPagina(direcao) {
-                    const novaPagina = this.currentPage + direcao;
-                    if(novaPagina >= 1 && novaPagina <= this.totalPages) {
-                        this.currentPage = novaPagina;
-                    }
-                },
-
-                limparFiltros() {
-                    this.filtrosEstoque.termo = '';
-                    this.filtrosEstoque.precoMax = null;
-                    this.currentPage = 1;
-                },
-
+                mudarPagina(dir) { if(this.currentPage + dir >= 1 && this.currentPage + dir <= this.totalPages) this.currentPage += dir; },
+                limparFiltros() { this.filtrosEstoque.termo = ''; this.filtrosEstoque.precoMax = null; this.currentPage = 1; },
                 mostrarFeedback(titulo, msg) { this.feedback = { aberto: true, titulo, mensagem: msg }; },
-
+                
+                // FUNÇÕES DO MODAL
+                abrirModalNovo() { this.novoProduto = { id: null, nome: '', custo: null, inspiracao: '', preco_suger_ml: null }; this.modalAberto = true; },
+                abrirModalEdicao(p) { this.novoProduto = { ...p }; this.modalAberto = true; },
+                
                 aplicarPrecoSugerido() {
                     if(this.produtoSelecionado) {
                         this.vendaInput.precoUnitarioBase = this.produtoSelecionado.preco_suger_ml || 0;
@@ -330,10 +303,9 @@
                 alterarQuantidade(val) {
                     if(this.vendaInput.quantidade + val >= 1) {
                         this.vendaInput.quantidade += val;
-                        this.vendaInput.precoVenda = this.vendaInput.precoUnitarioBase * this.vendaInput.quantidade;
+                        this.vendaInput.precoVenda = (this.vendaInput.precoUnitarioBase || 0) * this.vendaInput.quantidade;
                     }
                 },
-
                 async carregarTudo() {
                     this.loading = true;
                     try {
@@ -343,56 +315,29 @@
                         this.vendas = v || [];
                     } catch(e) { console.error(e); } finally { this.loading = false; }
                 },
-
                 async salvarProduto() {
+                    if(!this.novoProduto.nome || !this.novoProduto.custo) return;
                     this.loading = true;
                     if (this.novoProduto.id) await _supabase.from('produtos').update(this.novoProduto).eq('id', this.novoProduto.id);
                     else await _supabase.from('produtos').insert([this.novoProduto]);
                     this.modalAberto = false; await this.carregarTudo();
-                    this.mostrarFeedback('Sucesso!', 'Dados salvos.');
+                    this.mostrarFeedback('Sucesso!', 'Produto salvo no estoque.');
                 },
-
                 solicitarExclusaoProduto(id) {
-                    this.confirmDialog = {
-                        aberto: true,
-                        mensagem: 'Isso removerá o perfume do estoque.',
-                        acaoConfirmada: async () => {
-                            this.confirmDialog.aberto = false;
-                            this.loading = true;
-                            await _supabase.from('produtos').delete().eq('id', id);
-                            await this.carregarTudo();
-                        }
-                    };
+                    this.confirmDialog = { aberto: true, mensagem: 'Isso removerá o perfume definitivamente.', acaoConfirmada: async () => { this.confirmDialog.aberto = false; this.loading = true; await _supabase.from('produtos').delete().eq('id', id); await this.carregarTudo(); } };
                 },
-
                 async confirmarVenda() {
                     this.loading = true;
-                    const lucro = this.vendaInput.precoVenda - (this.produtoSelecionado.custo * this.vendaInput.quantidade) - (60 * this.vendaInput.quantidade);
-                    await _supabase.from('vendas').insert([{
-                        produto_id: this.vendaInput.produtoId,
-                        nome_produto_snapshot: this.produtoSelecionado.nome,
-                        quantidade: this.vendaInput.quantidade,
-                        faturamento_total: this.vendaInput.precoVenda,
-                        lucro_liquido: lucro
-                    }]);
+                    const custoTotal = (this.produtoSelecionado.custo || 0) * this.vendaInput.quantidade;
+                    const lucro = this.vendaInput.precoVenda - custoTotal - (60 * this.vendaInput.quantidade);
+                    await _supabase.from('vendas').insert([{ produto_id: this.vendaInput.produtoId, nome_produto_snapshot: this.produtoSelecionado.nome, quantidade: this.vendaInput.quantidade, faturamento_total: this.vendaInput.precoVenda, lucro_liquido: lucro }]);
                     this.vendaInput = { produtoId: '', precoVenda: null, quantidade: 1, precoUnitarioBase: 0 };
                     await this.carregarTudo();
                     this.mostrarFeedback('Venda Registrada!', 'Dashboard atualizado.');
                 },
-
                 solicitarExclusaoVenda(id) {
-                    this.confirmDialog = {
-                        aberto: true,
-                        mensagem: 'Deseja apagar esta venda?',
-                        acaoConfirmada: async () => {
-                            this.confirmDialog.aberto = false;
-                            this.loading = true;
-                            await _supabase.from('vendas').delete().eq('id', id);
-                            await this.carregarTudo();
-                        }
-                    };
+                    this.confirmDialog = { aberto: true, mensagem: 'Deseja apagar esta venda?', acaoConfirmada: async () => { this.confirmDialog.aberto = false; this.loading = true; await _supabase.from('vendas').delete().eq('id', id); await this.carregarTudo(); } };
                 },
-
                 atualizarGrafico() {
                     const ctx = document.getElementById('pieChart');
                     if(!ctx || this.vendas.length === 0) return;
@@ -408,4 +353,5 @@
         }).mount('#app');
     </script>
 </body>
+
 </html>
