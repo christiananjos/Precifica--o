@@ -35,6 +35,7 @@
         .input-modal { @apply w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-gray-800 font-semibold focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all; }
         .btn-primary { @apply bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-md hover:shadow-blue-500/30 transition-all transform hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2; }
         .btn-cancel { @apply bg-slate-100 text-slate-500 font-bold py-3 px-6 rounded-xl hover:bg-slate-200 hover:text-slate-700 transition-all active:scale-95 flex items-center justify-center gap-2 border border-transparent; }
+        .btn-danger { @apply bg-red-500 text-white font-bold py-3 px-6 rounded-xl shadow-md hover:bg-red-600 transition-all active:scale-95 flex items-center justify-center gap-2; }
         .btn-action-edit { @apply w-9 h-9 rounded-lg flex items-center justify-center bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all shadow-sm active:scale-95; }
         .btn-action-delete { @apply w-9 h-9 rounded-lg flex items-center justify-center bg-red-50 text-red-500 hover:bg-red-100 transition-all shadow-sm active:scale-95; }
         .badge-insp { @apply text-[10px] uppercase font-bold tracking-wider px-2 py-1 rounded-md bg-purple-50 text-purple-600 border border-purple-100 inline-block max-w-[120px] truncate; }
@@ -48,7 +49,7 @@
     <div id="app" class="w-full flex h-full relative">
         <div v-if="menuAberto" @click="menuAberto = false" class="fixed inset-0 bg-black/20 z-20 lg:hidden backdrop-blur-sm"></div>
 
-        <aside v-show="menuAberto || !isMobile" class="fixed lg:static inset-y-0 left-0 w-64 bg-white border-r border-gray-100 z-30 flex flex-col h-full shadow-xl lg:shadow-none">
+        <aside v-show="menuAberto || !isMobile" class="fixed lg:static inset-y-0 left-0 w-64 bg-white border-r border-gray-100 z-30 flex flex-col h-full">
             <div class="p-8 flex items-center gap-3">
                 <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg"><i class="fa-solid fa-cloud"></i></div>
                 <span class="font-bold text-gray-800 tracking-tight text-lg">PerfumeCloud</span>
@@ -62,15 +63,15 @@
         </aside>
 
         <main class="flex-1 flex flex-col h-full overflow-hidden relative">
-            <header class="lg:hidden h-16 bg-white border-b border-gray-100 flex items-center px-4 justify-between shrink-0">
-                <button @click="menuAberto = true" class="text-gray-500 p-2"><i class="fa-solid fa-bars text-xl"></i></button>
-                <span class="font-bold text-gray-800">PerfumeCloud</span>
-                <div class="w-8"></div>
+            <header class="lg:hidden h-16 bg-white border-b border-gray-100 flex items-center px-4 justify-between shrink-0 text-gray-800 font-bold px-6">
+                <button @click="menuAberto = true" class="text-gray-500"><i class="fa-solid fa-bars text-xl"></i></button>
+                PerfumeCloud
+                <div class="w-5"></div>
             </header>
 
             <div class="flex-1 overflow-y-auto p-4 lg:p-8 bg-[#f8fafc]">
                 <div class="max-w-6xl mx-auto">
-                    <div v-if="loading" class="fixed top-4 right-4 bg-white px-5 py-3 rounded-full shadow-xl z-50 flex items-center gap-3 text-sm font-medium"><i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i>Processando...</div>
+                    <div v-if="loading" class="fixed top-4 right-4 bg-white px-5 py-3 rounded-full shadow-xl z-50 flex items-center gap-3 text-sm font-medium border border-gray-100 animate-pulse"><i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i>Processando...</div>
 
                     <div v-show="telaAtual === 'dashboard'" class="animate-fade-in space-y-8">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -93,32 +94,19 @@
                     </div>
 
                     <div v-show="telaAtual === 'vender'" class="animate-fade-in flex flex-col items-center justify-center min-h-[60vh]">
-                        <div class="w-full max-w-md bg-white p-8 rounded-[2rem] shadow-xl border border-gray-100 space-y-6">
+                        <div class="w-full max-w-md bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100 space-y-6">
                             <h2 class="text-2xl font-bold text-center text-gray-800">Venda Rápida</h2>
                             <div class="space-y-4">
                                 <div><label class="text-xs font-bold text-gray-400 uppercase block mb-1">Produto</label>
-                                    <select v-model="vendaInput.produtoId" class="input-soft" @change="aplicarPrecoSugerido">
-                                        <option value="" disabled>Selecione...</option>
-                                        <option v-for="p in produtos" :key="p.id" :value="p.id">{{ p.nome }}</option>
-                                    </select>
+                                    <select v-model="vendaInput.produtoId" class="input-soft" @change="aplicarPrecoSugerido"><option value="" disabled>Selecione...</option><option v-for="p in produtos" :key="p.id" :value="p.id">{{ p.nome }}</option></select>
                                 </div>
                                 <div class="text-center">
                                     <label class="text-xs font-bold text-gray-400 uppercase block mb-1">Valor Total da Venda</label>
-                                    <div class="flex items-baseline justify-center gap-1 text-gray-800">
-                                        <span class="text-2xl font-bold">R$</span>
-                                        <input v-model.number="vendaInput.precoVenda" type="number" step="0.01" class="text-5xl font-black bg-transparent border-none text-center w-56 outline-none" placeholder="0,00">
-                                    </div>
-                                    <p v-if="vendaInput.quantidade > 1" class="text-xs text-gray-400 mt-2">
-                                        (Unitário: {{ formatarMoeda(vendaInput.precoVenda / vendaInput.quantidade) }})
-                                    </p>
+                                    <div class="flex items-baseline justify-center gap-1 text-gray-800"><span class="text-2xl font-bold">R$</span><input v-model.number="vendaInput.precoVenda" type="number" step="0.01" class="text-5xl font-black bg-transparent border-none text-center w-56 outline-none" placeholder="0,00"></div>
                                 </div>
                                 <div class="flex flex-col items-center">
                                     <label class="text-xs font-bold text-gray-400 uppercase block mb-2">Quantidade</label>
-                                    <div class="flex gap-4 bg-gray-50 p-2 rounded-xl">
-                                        <button @click="alterarQuantidade(-1)" class="w-10 h-10 bg-white rounded-lg shadow-sm hover:text-blue-600 transition-colors">-</button>
-                                        <span class="w-10 flex items-center justify-center font-bold text-xl">{{ vendaInput.quantidade }}</span>
-                                        <button @click="alterarQuantidade(1)" class="w-10 h-10 bg-white rounded-lg shadow-sm hover:text-blue-600 transition-colors">+</button>
-                                    </div>
+                                    <div class="flex gap-4 bg-gray-50 p-2 rounded-xl"><button @click="alterarQuantidade(-1)" class="w-10 h-10 bg-white rounded-lg shadow-sm">-</button><span class="w-10 flex items-center justify-center font-bold text-xl">{{ vendaInput.quantidade }}</span><button @click="alterarQuantidade(1)" class="w-10 h-10 bg-white rounded-lg shadow-sm">+</button></div>
                                 </div>
                                 <button @click="confirmarVenda" :disabled="!vendaInput.produtoId || !vendaInput.precoVenda" class="btn-primary w-full py-4 text-lg">Confirmar Venda</button>
                             </div>
@@ -144,7 +132,7 @@
                                         <td class="py-4 px-6 text-center">
                                             <div class="flex justify-center gap-2">
                                                 <button @click="abrirModalEdicao(prod)" class="btn-action-edit"><i class="fa-solid fa-pen"></i></button>
-                                                <button @click="removerProduto(prod.id)" class="btn-action-delete"><i class="fa-solid fa-trash-can"></i></button>
+                                                <button @click="solicitarExclusaoProduto(prod.id)" class="btn-action-delete"><i class="fa-solid fa-trash-can"></i></button>
                                             </div>
                                         </td>
                                     </tr>
@@ -166,7 +154,7 @@
                                         <td class="py-4 px-6 text-sm font-medium text-gray-800">{{ venda.nome_produto_snapshot }}</td>
                                         <td class="py-4 px-6 text-sm text-center">{{ venda.quantidade }}</td>
                                         <td class="py-4 px-6 text-sm text-right font-bold text-emerald-600">{{ formatarMoeda(venda.lucro_liquido) }}</td>
-                                        <td class="py-4 px-6 text-center"><button @click="removerVenda(venda.id)" class="text-gray-300 hover:text-red-500"><i class="fa-solid fa-xmark"></i></button></td>
+                                        <td class="py-4 px-6 text-center"><button @click="solicitarExclusaoVenda(venda.id)" class="text-gray-300 hover:text-red-500"><i class="fa-solid fa-xmark"></i></button></td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -191,6 +179,36 @@
                 </div>
             </div>
         </transition>
+
+        <transition name="fade">
+            <div v-if="feedback.aberto" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+                <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-xs p-8 text-center animate-scale">
+                    <div class="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+                    <h4 class="text-xl font-bold text-gray-800 mb-2">{{ feedback.titulo }}</h4>
+                    <p class="text-gray-500 text-sm mb-6">{{ feedback.mensagem }}</p>
+                    <button @click="feedback.aberto = false" class="btn-primary w-full py-3">Entendido</button>
+                </div>
+            </div>
+        </transition>
+
+        <transition name="fade">
+            <div v-if="confirmDialog.aberto" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+                <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm p-8 text-center animate-scale">
+                    <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <h4 class="text-xl font-bold text-gray-800 mb-2">Tem certeza?</h4>
+                    <p class="text-gray-500 text-sm mb-8">{{ confirmDialog.mensagem }}</p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button @click="confirmDialog.aberto = false" class="btn-cancel">Não, cancelar</button>
+                        <button @click="confirmDialog.acaoConfirmada" class="btn-danger">Sim, excluir</button>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
     </div>
 
     <script>
@@ -208,7 +226,10 @@
                     produtos: [], vendas: [], dashboardData: { topProdutos: [], cores: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'] },
                     novoProduto: { id: null, nome: '', custo: null, inspiracao: '', preco_suger_ml: null },
                     vendaInput: { produtoId: '', precoVenda: null, quantidade: 1, precoUnitarioBase: 0 },
-                    pieChartInstance: null
+                    pieChartInstance: null,
+                    // ESTADOS PARA OS NOVOS DIALOGS
+                    feedback: { aberto: false, titulo: '', mensagem: '' },
+                    confirmDialog: { aberto: false, mensagem: '', acaoConfirmada: null }
                 }
             },
             computed: {
@@ -216,8 +237,7 @@
                 kpis() {
                     const luc = this.vendas.reduce((a, v) => a + (v.lucro_liquido || 0), 0);
                     const fat = this.vendas.reduce((a, v) => a + (v.faturamento_total || 0), 0);
-                    const qtd = this.vendas.reduce((a, v) => a + (v.quantidade || 0), 0);
-                    return { lucro: luc, faturamento: fat, qtdVendas: qtd };
+                    return { lucro: luc, faturamento: fat, qtdVendas: this.vendas.length };
                 },
                 produtoSelecionado() { return this.produtos.find(p => p.id === this.vendaInput.produtoId); }
             },
@@ -225,25 +245,26 @@
                 formatarMoeda(v) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0); },
                 navegar(t) { this.telaAtual = t; if(this.isMobile) this.menuAberto = false; if(t === 'dashboard') setTimeout(() => this.atualizarGrafico(), 300); },
                 
-                // --- LÓGICA DE AUTO-PREENCHIMENTO ---
+                // MÉTODOS DE FEEDBACK CUSTOMIZADO
+                mostrarFeedback(titulo, msg) {
+                    this.feedback = { aberto: true, titulo, mensagem: msg };
+                },
+
+                // LÓGICA DE VENDA COM AUTO-PREENCHIMENTO
                 aplicarPrecoSugerido() {
                     if(this.produtoSelecionado) {
                         this.vendaInput.precoUnitarioBase = this.produtoSelecionado.preco_suger_ml || 0;
-                        this.atualizarValorTotal();
+                        this.vendaInput.precoVenda = this.vendaInput.precoUnitarioBase * this.vendaInput.quantidade;
                     }
                 },
-                alterarQuantidade(valor) {
-                    const novaQtd = this.vendaInput.quantidade + valor;
-                    if(novaQtd >= 1) {
-                        this.vendaInput.quantidade = novaQtd;
-                        this.atualizarValorTotal();
+                alterarQuantidade(val) {
+                    if(this.vendaInput.quantidade + val >= 1) {
+                        this.vendaInput.quantidade += val;
+                        this.vendaInput.precoVenda = this.vendaInput.precoUnitarioBase * this.vendaInput.quantidade;
                     }
                 },
-                atualizarValorTotal() {
-                    this.vendaInput.precoVenda = this.vendaInput.precoUnitarioBase * this.vendaInput.quantidade;
-                },
-                // ------------------------------------
 
+                // BANCO DE DADOS
                 async carregarTudo() {
                     this.loading = true;
                     try {
@@ -254,22 +275,33 @@
                         if(this.telaAtual === 'dashboard') this.atualizarGrafico();
                     } catch(e) { console.error(e); } finally { this.loading = false; }
                 },
-                abrirModalNovo() { this.novoProduto = { id: null, nome: '', custo: null, inspiracao: '', preco_suger_ml: null }; this.modalAberto = true; },
-                abrirModalEdicao(p) { this.novoProduto = { ...p }; this.modalAberto = true; },
+
                 async salvarProduto() {
                     this.loading = true;
                     if (this.novoProduto.id) await _supabase.from('produtos').update(this.novoProduto).eq('id', this.novoProduto.id);
                     else await _supabase.from('produtos').insert([this.novoProduto]);
                     this.modalAberto = false; await this.carregarTudo();
+                    this.mostrarFeedback('Sucesso!', 'Os dados do perfume foram salvos no estoque.');
                 },
-                async removerProduto(id) { if(confirm('Excluir produto?')) { await _supabase.from('produtos').delete().eq('id', id); await this.carregarTudo(); } },
+
+                // SUBSTITUIÇÃO DO CONFIRM DE EXCLUSÃO
+                solicitarExclusaoProduto(id) {
+                    this.confirmDialog = {
+                        aberto: true,
+                        mensagem: 'Isso removerá permanentemente o perfume do estoque.',
+                        acaoConfirmada: async () => {
+                            this.confirmDialog.aberto = false;
+                            this.loading = true;
+                            await _supabase.from('produtos').delete().eq('id', id);
+                            await this.carregarTudo();
+                            this.mostrarFeedback('Removido', 'O produto foi excluído com sucesso.');
+                        }
+                    };
+                },
+
                 async confirmarVenda() {
                     this.loading = true;
-                    // Cálculo: Faturamento - Custo Total - (Taxa ML 60 reais por unidade)
-                    const custoTotal = this.produtoSelecionado.custo * this.vendaInput.quantidade;
-                    const taxaTotal = 60 * this.vendaInput.quantidade;
-                    const lucro = this.vendaInput.precoVenda - custoTotal - taxaTotal;
-
+                    const lucro = this.vendaInput.precoVenda - (this.produtoSelecionado.custo * this.vendaInput.quantidade) - (60 * this.vendaInput.quantidade);
                     await _supabase.from('vendas').insert([{
                         produto_id: this.vendaInput.produtoId,
                         nome_produto_snapshot: this.produtoSelecionado.nome,
@@ -279,9 +311,22 @@
                     }]);
                     this.vendaInput = { produtoId: '', precoVenda: null, quantidade: 1, precoUnitarioBase: 0 };
                     await this.carregarTudo();
-                    alert("Venda registrada com sucesso!");
+                    this.mostrarFeedback('Venda Registrada!', 'O lucro e o faturamento foram atualizados no seu dashboard.');
                 },
-                async removerVenda(id) { if(confirm('Apagar venda do histórico?')) { await _supabase.from('vendas').delete().eq('id', id); await this.carregarTudo(); } },
+
+                solicitarExclusaoVenda(id) {
+                    this.confirmDialog = {
+                        aberto: true,
+                        mensagem: 'Esta venda será removida do histórico e dos cálculos do dashboard.',
+                        acaoConfirmada: async () => {
+                            this.confirmDialog.aberto = false;
+                            this.loading = true;
+                            await _supabase.from('vendas').delete().eq('id', id);
+                            await this.carregarTudo();
+                        }
+                    };
+                },
+
                 atualizarGrafico() {
                     const ctx = document.getElementById('pieChart');
                     if(!ctx || this.vendas.length === 0) return;
