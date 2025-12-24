@@ -17,7 +17,6 @@
             }
         }
     </script>
-    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -98,18 +97,27 @@
                             <h2 class="text-2xl font-bold text-center text-gray-800">Venda Rápida</h2>
                             <div class="space-y-4">
                                 <div><label class="text-xs font-bold text-gray-400 uppercase block mb-1">Produto</label>
-                                    <select v-model="vendaInput.produtoId" class="input-soft"><option value="" disabled>Selecione...</option><option v-for="p in produtos" :value="p.id">{{ p.nome }}</option></select>
+                                    <select v-model="vendaInput.produtoId" class="input-soft" @change="aplicarPrecoSugerido">
+                                        <option value="" disabled>Selecione...</option>
+                                        <option v-for="p in produtos" :key="p.id" :value="p.id">{{ p.nome }}</option>
+                                    </select>
                                 </div>
                                 <div class="text-center">
-                                    <label class="text-xs font-bold text-gray-400 uppercase block mb-1">Preço Venda</label>
-                                    <div class="flex items-baseline justify-center gap-1 text-gray-800"><span class="text-2xl font-bold">R$</span><input v-model.number="vendaInput.precoVenda" type="number" step="0.01" class="text-5xl font-black bg-transparent border-none text-center w-48 outline-none" placeholder="0,00"></div>
+                                    <label class="text-xs font-bold text-gray-400 uppercase block mb-1">Valor Total da Venda</label>
+                                    <div class="flex items-baseline justify-center gap-1 text-gray-800">
+                                        <span class="text-2xl font-bold">R$</span>
+                                        <input v-model.number="vendaInput.precoVenda" type="number" step="0.01" class="text-5xl font-black bg-transparent border-none text-center w-56 outline-none" placeholder="0,00">
+                                    </div>
+                                    <p v-if="vendaInput.quantidade > 1" class="text-xs text-gray-400 mt-2">
+                                        (Unitário: {{ formatarMoeda(vendaInput.precoVenda / vendaInput.quantidade) }})
+                                    </p>
                                 </div>
                                 <div class="flex flex-col items-center">
                                     <label class="text-xs font-bold text-gray-400 uppercase block mb-2">Quantidade</label>
                                     <div class="flex gap-4 bg-gray-50 p-2 rounded-xl">
-                                        <button @click="vendaInput.quantidade > 1 ? vendaInput.quantidade-- : null" class="w-10 h-10 bg-white rounded-lg shadow-sm">-</button>
+                                        <button @click="alterarQuantidade(-1)" class="w-10 h-10 bg-white rounded-lg shadow-sm hover:text-blue-600 transition-colors">-</button>
                                         <span class="w-10 flex items-center justify-center font-bold text-xl">{{ vendaInput.quantidade }}</span>
-                                        <button @click="vendaInput.quantidade++" class="w-10 h-10 bg-white rounded-lg shadow-sm">+</button>
+                                        <button @click="alterarQuantidade(1)" class="w-10 h-10 bg-white rounded-lg shadow-sm hover:text-blue-600 transition-colors">+</button>
                                     </div>
                                 </div>
                                 <button @click="confirmarVenda" :disabled="!vendaInput.produtoId || !vendaInput.precoVenda" class="btn-primary w-full py-4 text-lg">Confirmar Venda</button>
@@ -199,7 +207,7 @@
                     loading: false, menuAberto: false, modalAberto: false, telaAtual: 'dashboard', isMobile: window.innerWidth < 1024,
                     produtos: [], vendas: [], dashboardData: { topProdutos: [], cores: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'] },
                     novoProduto: { id: null, nome: '', custo: null, inspiracao: '', preco_suger_ml: null },
-                    vendaInput: { produtoId: '', precoVenda: null, quantidade: 1 },
+                    vendaInput: { produtoId: '', precoVenda: null, quantidade: 1, precoUnitarioBase: 0 },
                     pieChartInstance: null
                 }
             },
@@ -208,13 +216,34 @@
                 kpis() {
                     const luc = this.vendas.reduce((a, v) => a + (v.lucro_liquido || 0), 0);
                     const fat = this.vendas.reduce((a, v) => a + (v.faturamento_total || 0), 0);
-                    return { lucro: luc, faturamento: fat, qtdVendas: this.vendas.length };
+                    const qtd = this.vendas.reduce((a, v) => a + (v.quantidade || 0), 0);
+                    return { lucro: luc, faturamento: fat, qtdVendas: qtd };
                 },
                 produtoSelecionado() { return this.produtos.find(p => p.id === this.vendaInput.produtoId); }
             },
             methods: {
                 formatarMoeda(v) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0); },
                 navegar(t) { this.telaAtual = t; if(this.isMobile) this.menuAberto = false; if(t === 'dashboard') setTimeout(() => this.atualizarGrafico(), 300); },
+                
+                // --- LÓGICA DE AUTO-PREENCHIMENTO ---
+                aplicarPrecoSugerido() {
+                    if(this.produtoSelecionado) {
+                        this.vendaInput.precoUnitarioBase = this.produtoSelecionado.preco_suger_ml || 0;
+                        this.atualizarValorTotal();
+                    }
+                },
+                alterarQuantidade(valor) {
+                    const novaQtd = this.vendaInput.quantidade + valor;
+                    if(novaQtd >= 1) {
+                        this.vendaInput.quantidade = novaQtd;
+                        this.atualizarValorTotal();
+                    }
+                },
+                atualizarValorTotal() {
+                    this.vendaInput.precoVenda = this.vendaInput.precoUnitarioBase * this.vendaInput.quantidade;
+                },
+                // ------------------------------------
+
                 async carregarTudo() {
                     this.loading = true;
                     try {
@@ -236,19 +265,23 @@
                 async removerProduto(id) { if(confirm('Excluir produto?')) { await _supabase.from('produtos').delete().eq('id', id); await this.carregarTudo(); } },
                 async confirmarVenda() {
                     this.loading = true;
-                    const lucro = (this.vendaInput.precoVenda * this.vendaInput.quantidade) - (this.produtoSelecionado.custo * this.vendaInput.quantidade) - (60 * this.vendaInput.quantidade);
+                    // Cálculo: Faturamento - Custo Total - (Taxa ML 60 reais por unidade)
+                    const custoTotal = this.produtoSelecionado.custo * this.vendaInput.quantidade;
+                    const taxaTotal = 60 * this.vendaInput.quantidade;
+                    const lucro = this.vendaInput.precoVenda - custoTotal - taxaTotal;
+
                     await _supabase.from('vendas').insert([{
                         produto_id: this.vendaInput.produtoId,
                         nome_produto_snapshot: this.produtoSelecionado.nome,
                         quantidade: this.vendaInput.quantidade,
-                        faturamento_total: this.vendaInput.precoVenda * this.vendaInput.quantidade,
+                        faturamento_total: this.vendaInput.precoVenda,
                         lucro_liquido: lucro
                     }]);
-                    this.vendaInput = { produtoId: '', precoVenda: null, quantidade: 1 };
+                    this.vendaInput = { produtoId: '', precoVenda: null, quantidade: 1, precoUnitarioBase: 0 };
                     await this.carregarTudo();
-                    alert("Venda registrada!");
+                    alert("Venda registrada com sucesso!");
                 },
-                async removerVenda(id) { if(confirm('Apagar venda?')) { await _supabase.from('vendas').delete().eq('id', id); await this.carregarTudo(); } },
+                async removerVenda(id) { if(confirm('Apagar venda do histórico?')) { await _supabase.from('vendas').delete().eq('id', id); await this.carregarTudo(); } },
                 atualizarGrafico() {
                     const ctx = document.getElementById('pieChart');
                     if(!ctx || this.vendas.length === 0) return;
