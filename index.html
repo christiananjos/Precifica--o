@@ -34,14 +34,9 @@
         .scale-enter-from, .scale-leave-to { opacity: 0; transform: scale(0.95); }
         .input-soft { @apply w-full bg-gray-50 border-none rounded-2xl py-4 px-5 text-gray-700 font-medium focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all placeholder-gray-400 text-center; }
         .input-modal { @apply w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-gray-800 font-semibold focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all; }
-        .input-filter { @apply bg-white border border-gray-200 rounded-xl py-2 px-4 text-sm focus:outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-500/5 transition-all w-full; }
         .btn-primary { @apply bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-md hover:shadow-blue-500/30 transition-all transform hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2; }
-        .btn-cancel { @apply bg-slate-100 text-slate-500 font-bold py-3 px-6 rounded-xl hover:bg-slate-200 hover:text-slate-700 transition-all active:scale-95 flex items-center justify-center gap-2 border border-transparent; }
-        .btn-danger { @apply bg-red-500 text-white font-bold py-3 px-6 rounded-xl shadow-md hover:bg-red-600 transition-all active:scale-95 flex items-center justify-center gap-2; }
-        .btn-action-edit { @apply w-9 h-9 rounded-lg flex items-center justify-center bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all shadow-sm active:scale-95; }
-        .btn-action-delete { @apply w-9 h-9 rounded-lg flex items-center justify-center bg-red-50 text-red-500 hover:bg-red-100 transition-all shadow-sm active:scale-95; }
         .btn-page { @apply w-10 h-10 rounded-xl flex items-center justify-center font-bold transition-all border border-gray-200 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed active:scale-90; }
-        .badge-insp { @apply text-[10px] uppercase font-bold tracking-wider px-2 py-1 rounded-md bg-purple-50 text-purple-600 border border-purple-100 inline-block max-w-[120px] truncate; }
+        .badge-status { @apply text-[10px] uppercase font-bold px-2 py-1 rounded-full bg-blue-50 text-blue-600 border border-blue-100; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
     </style>
@@ -96,36 +91,37 @@
                         </div>
                     </div>
 
-                    <div v-show="telaAtual === 'vender'" class="animate-fade-in flex flex-col items-center justify-center min-h-[60vh]">
-                        <div class="w-full max-w-md bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100 space-y-6">
+                    <div v-show="telaAtual === 'vender'" class="animate-fade-in flex flex-col items-center justify-center min-h-[70vh]">
+                        <div class="w-full max-w-lg bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100 space-y-6">
                             <h2 class="text-2xl font-bold text-center text-gray-800">Venda Rápida</h2>
-                            <div class="space-y-4">
-                                <div><label class="text-xs font-bold text-gray-400 uppercase block mb-1">Produto</label>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="md:col-span-2">
+                                    <label class="text-xs font-bold text-gray-400 uppercase block mb-1">Produto</label>
                                     <select v-model="vendaInput.produtoId" class="input-soft" @change="aplicarPrecoSugerido"><option value="" disabled>Selecione...</option><option v-for="p in produtos" :key="p.id" :value="p.id">{{ p.nome }}</option></select>
                                 </div>
-                                <div class="text-center">
-                                    <label class="text-xs font-bold text-gray-400 uppercase block mb-1">Valor Total da Venda</label>
+                                <div>
+                                    <label class="text-xs font-bold text-yellow-600 uppercase block mb-1">Pedido Mercado Livre</label>
+                                    <input v-model="vendaInput.mlOrderId" type="text" placeholder="ID do Pedido" class="input-soft !py-3 !text-left !px-4 bg-yellow-50/30 border border-yellow-100">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-blue-600 uppercase block mb-1">Rastreio Correios</label>
+                                    <input v-model="vendaInput.trackingCode" type="text" placeholder="AA123456789BR" class="input-soft !py-3 !text-left !px-4 bg-blue-50/30 border border-blue-100 uppercase">
+                                </div>
+                                <div class="md:col-span-2 text-center py-4">
+                                    <label class="text-xs font-bold text-gray-400 uppercase block mb-1">Valor Total</label>
                                     <div class="flex items-baseline justify-center gap-1 text-gray-800"><span class="text-2xl font-bold">R$</span><input v-model.number="vendaInput.precoVenda" type="number" step="0.01" class="text-5xl font-black bg-transparent border-none text-center w-56 outline-none" placeholder="0,00"></div>
                                 </div>
-                                <div class="flex flex-col items-center">
+                                <div class="md:col-span-2 flex flex-col items-center">
                                     <label class="text-xs font-bold text-gray-400 uppercase block mb-2">Quantidade</label>
                                     <div class="flex gap-4 bg-gray-50 p-2 rounded-xl"><button @click="alterarQuantidade(-1)" class="w-10 h-10 bg-white rounded-lg shadow-sm">-</button><span class="w-10 flex items-center justify-center font-bold text-xl">{{ vendaInput.quantidade }}</span><button @click="alterarQuantidade(1)" class="w-10 h-10 bg-white rounded-lg shadow-sm">+</button></div>
                                 </div>
-                                <button @click="confirmarVenda" :disabled="!vendaInput.produtoId || !vendaInput.precoVenda" class="btn-primary w-full py-4 text-lg">Confirmar Venda</button>
+                                <button @click="confirmarVenda" :disabled="!vendaInput.produtoId || !vendaInput.precoVenda" class="md:col-span-2 btn-primary w-full py-4 text-lg mt-4">Confirmar Venda</button>
                             </div>
                         </div>
                     </div>
 
                     <div v-show="telaAtual === 'produtos'" class="animate-fade-in space-y-6">
-                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                            <h2 class="text-2xl font-bold text-gray-800">Estoque</h2>
-                            <button @click="abrirModalNovo" class="btn-primary py-2.5 px-5"><i class="fa-solid fa-plus"></i> Novo Item</button>
-                        </div>
-                        <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div class="relative"><i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-300"></i><input v-model="filtrosEstoque.termo" type="text" placeholder="Nome ou Inspiração..." class="input-filter pl-10" @input="currentPage = 1"></div>
-                            <div class="relative"><i class="fa-solid fa-tag absolute left-3 top-1/2 -translate-y-1/2 text-gray-300"></i><input v-model.number="filtrosEstoque.precoMax" type="number" placeholder="Preço máximo..." class="input-filter pl-10" @input="currentPage = 1"></div>
-                            <div class="flex items-center gap-2"><button @click="limparFiltros" class="text-xs font-bold text-blue-500 uppercase tracking-wider">Limpar</button><span class="text-xs text-gray-400 ml-auto">{{ produtosFiltrados.length }} total</span></div>
-                        </div>
+                        <div class="flex justify-between items-center"><h2 class="text-2xl font-bold text-gray-800">Estoque</h2><button @click="abrirModalNovo" class="btn-primary py-2.5 px-5"><i class="fa-solid fa-plus"></i> Novo Item</button></div>
                         <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
                             <table class="w-full text-left">
                                 <thead class="bg-gray-50 text-gray-500 uppercase text-xs font-bold border-b">
@@ -146,14 +142,6 @@
                                     </tr>
                                 </tbody>
                             </table>
-                            <div v-if="totalPages > 1" class="p-4 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between">
-                                <div class="text-xs text-gray-400">Mostrando {{ itemsRange }} de {{ produtosFiltrados.length }}</div>
-                                <div class="flex items-center gap-2">
-                                    <button @click="mudarPagina(-1)" :disabled="currentPage === 1" class="btn-page"><i class="fa-solid fa-chevron-left"></i></button>
-                                    <span class="text-sm font-bold px-2">{{ currentPage }} / {{ totalPages }}</span>
-                                    <button @click="mudarPagina(1)" :disabled="currentPage === totalPages" class="btn-page"><i class="fa-solid fa-chevron-right"></i></button>
-                                </div>
-                            </div>
                         </div>
                     </div>
 
@@ -162,15 +150,30 @@
                         <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                             <table class="w-full text-left">
                                 <thead class="bg-gray-50 text-gray-500 uppercase text-xs font-bold border-b">
-                                    <tr><th class="py-5 px-6">Data</th><th class="py-5 px-6">Produto</th><th class="py-5 px-6 text-center">Qtd</th><th class="py-5 px-6 text-right">Lucro</th><th class="py-5 px-6 text-center">Ações</th></tr>
+                                    <tr><th class="py-5 px-6">Data</th><th class="py-5 px-6">Produto</th><th class="py-5 px-6">ML ID / Rastreio</th><th class="py-5 px-6 text-center">Qtd</th><th class="py-5 px-6 text-right">Lucro</th><th class="py-5 px-6 text-center">Ações</th></tr>
                                 </thead>
                                 <tbody class="divide-y">
                                     <tr v-for="venda in vendas" :key="venda.id" class="hover:bg-gray-50">
                                         <td class="py-4 px-6 text-sm text-gray-500">{{ new Date(venda.created_at).toLocaleDateString() }}</td>
                                         <td class="py-4 px-6 text-sm font-medium text-gray-800">{{ venda.nome_produto_snapshot }}</td>
+                                        <td class="py-4 px-6">
+                                            <div class="flex flex-col gap-1">
+                                                <span class="text-[10px] font-bold text-yellow-600" v-if="venda.ml_order_id"><i class="fa-solid fa-cart-shopping"></i> {{ venda.ml_order_id }}</span>
+                                                <div v-if="venda.tracking_code" class="flex items-center gap-2">
+                                                    <span class="text-[10px] font-bold text-blue-600"><i class="fa-solid fa-truck-fast"></i> {{ venda.tracking_code }}</span>
+                                                    <button @click="atualizarRastreio(venda)" class="text-[9px] bg-blue-600 text-white px-1 rounded hover:bg-blue-700">Ver Status</button>
+                                                </div>
+                                                <span v-if="venda.tracking_status" class="badge-status w-max">{{ venda.tracking_status }}</span>
+                                            </div>
+                                        </td>
                                         <td class="py-4 px-6 text-sm text-center">{{ venda.quantidade }}</td>
                                         <td class="py-4 px-6 text-sm text-right font-bold text-emerald-600">{{ formatarMoeda(venda.lucro_liquido) }}</td>
-                                        <td class="py-4 px-6 text-center"><button @click="solicitarExclusaoVenda(venda.id)" class="text-gray-300 hover:text-red-500"><i class="fa-solid fa-xmark"></i></button></td>
+                                        <td class="py-4 px-6 text-center">
+                                            <div class="flex items-center justify-center gap-2">
+                                                <a v-if="venda.tracking_code" :href="'https://www.linkrastreio.com.br/' + venda.tracking_code" target="_blank" class="text-blue-400 hover:text-blue-600"><i class="fa-solid fa-external-link text-xs"></i></a>
+                                                <button @click="solicitarExclusaoVenda(venda.id)" class="text-gray-300 hover:text-red-500"><i class="fa-solid fa-xmark"></i></button>
+                                            </div>
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -179,22 +182,6 @@
                 </div>
             </div>
         </main>
-
-        <transition name="fade">
-            <div v-if="modalAberto" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                <div @click.self="modalAberto = false" class="absolute inset-0"></div>
-                <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 relative z-10 animate-scale">
-                    <h3 class="text-2xl font-bold text-gray-800 text-center mb-6">{{ tituloModal }}</h3>
-                    <div class="space-y-4">
-                        <div><label class="text-xs font-bold text-gray-400 uppercase block mb-1">Nome</label><input v-model="novoProduto.nome" type="text" class="input-modal"></div>
-                        <div><label class="text-xs font-bold text-gray-400 uppercase block mb-1">Inspiração</label><input v-model="novoProduto.inspiracao" type="text" class="input-modal"></div>
-                        <div><label class="text-xs font-bold text-gray-400 uppercase block mb-1">Custo (R$)</label><input v-model.number="novoProduto.custo" type="number" step="0.01" class="input-modal"></div>
-                        <div><label class="text-xs font-bold text-orange-500 uppercase block mb-1">Sugerido ML (R$)</label><input v-model.number="novoProduto.preco_suger_ml" type="number" step="0.01" class="input-modal border-orange-100"></div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4 mt-8"><button @click="modalAberto = false" class="btn-cancel">Cancelar</button><button @click="salvarProduto" class="btn-primary">Salvar</button></div>
-                </div>
-            </div>
-        </transition>
 
         <transition name="fade">
             <div v-if="feedback.aberto" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
@@ -221,13 +208,29 @@
             </div>
         </transition>
 
+        <transition name="fade">
+            <div v-if="modalRastreio.aberto" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                <div @click.self="modalRastreio.aberto = false" class="absolute inset-0"></div>
+                <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 relative z-10 animate-scale max-h-[80vh] overflow-y-auto">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2"><i class="fa-solid fa-truck text-blue-600"></i> Rastreio: {{ modalRastreio.codigo }}</h3>
+                    <div class="space-y-4">
+                        <div v-for="evento in modalRastreio.eventos" class="border-l-2 border-blue-200 pl-4 py-1 relative">
+                            <div class="w-3 h-3 bg-blue-600 rounded-full absolute -left-[7px] top-2"></div>
+                            <p class="text-xs font-bold text-gray-800">{{ evento.status }}</p>
+                            <p class="text-[10px] text-gray-400">{{ evento.data }} - {{ evento.local }}</p>
+                        </div>
+                    </div>
+                    <button @click="modalRastreio.aberto = false" class="btn-primary w-full mt-6">Fechar</button>
+                </div>
+            </div>
+        </transition>
+
     </div>
 
     <script>
         const { createApp } = Vue;
         const { createClient } = supabase;
 
-        // --- SUAS CHAVES DO SUPABASE ---
         const SUPABASE_URL = 'https://ucnielenhniqsgvfmygl.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_Q2-vD5bsPeejn0INaao1gA_XqvYhd96';
         const _supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -238,33 +241,27 @@
                     loading: false, menuAberto: false, modalAberto: false, telaAtual: 'dashboard', isMobile: window.innerWidth < 1024,
                     produtos: [], vendas: [], dashboardData: { topProdutos: [], cores: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'] },
                     novoProduto: { id: null, nome: '', custo: null, inspiracao: '', preco_suger_ml: null },
-                    vendaInput: { produtoId: '', precoVenda: null, quantidade: 1, precoUnitarioBase: 0 },
+                    vendaInput: { produtoId: '', precoVenda: null, quantidade: 1, precoUnitarioBase: 0, mlOrderId: '', trackingCode: '' },
                     filtrosEstoque: { termo: '', precoMax: null },
                     currentPage: 1, itemsPerPage: 10,
                     pieChartInstance: null,
                     feedback: { aberto: false, titulo: '', mensagem: '' },
-                    confirmDialog: { aberto: false, mensagem: '', acaoConfirmada: null }
+                    confirmDialog: { aberto: false, mensagem: '', acaoConfirmada: null },
+                    modalRastreio: { aberto: false, codigo: '', eventos: [] }
                 }
             },
             computed: {
                 tituloModal() { return this.novoProduto.id ? 'Editar Perfume' : 'Novo Perfume'; },
                 produtosFiltrados() {
                     return this.produtos.filter(p => {
-                        const termoOk = !this.filtrosEstoque.termo || p.nome.toLowerCase().includes(this.filtrosEstoque.termo.toLowerCase()) || (p.inspiracao && p.inspiracao.toLowerCase().includes(this.filtrosEstoque.termo.toLowerCase()));
+                        const termoOk = !this.filtrosEstoque.termo || p.nome.toLowerCase().includes(this.filtrosEstoque.termo.toLowerCase());
                         const precoOk = !this.filtrosEstoque.precoMax || p.custo <= this.filtrosEstoque.precoMax;
                         return termoOk && precoOk;
                     });
                 },
                 totalPages() { return Math.ceil(this.produtosFiltrados.length / this.itemsPerPage) || 1; },
-                produtosPaginados() {
-                    const start = (this.currentPage - 1) * this.itemsPerPage;
-                    return this.produtosFiltrados.slice(start, start + this.itemsPerPage);
-                },
-                itemsRange() {
-                    const start = (this.currentPage - 1) * this.itemsPerPage + 1;
-                    const end = Math.min(this.currentPage * this.itemsPerPage, this.produtosFiltrados.length);
-                    return this.produtosFiltrados.length > 0 ? `${start}-${end}` : '0-0';
-                },
+                produtosPaginados() { return this.produtosFiltrados.slice((this.currentPage - 1) * this.itemsPerPage, this.currentPage * this.itemsPerPage); },
+                itemsRange() { return this.produtosFiltrados.length > 0 ? `${(this.currentPage - 1) * this.itemsPerPage + 1}-${Math.min(this.currentPage * this.itemsPerPage, this.produtosFiltrados.length)}` : '0-0'; },
                 kpis() {
                     const luc = this.vendas.reduce((a, v) => a + (v.lucro_liquido || 0), 0);
                     const fat = this.vendas.reduce((a, v) => a + (v.faturamento_total || 0), 0);
@@ -294,6 +291,32 @@
                         this.vendaInput.precoVenda = (this.vendaInput.precoUnitarioBase || 0) * this.vendaInput.quantidade;
                     }
                 },
+
+                // ATUALIZADO: Lógica de rastreio dinâmica usando API aberta (Linkrastreio)
+                async atualizarRastreio(venda) {
+                    this.loading = true;
+                    try {
+                        // Fazemos uma requisição para uma API que processa o HTML dos correios
+                        const response = await fetch(`https://api.linkrastreio.com.br/rastreio?id=${venda.tracking_code}`);
+                        const data = await response.json();
+                        
+                        if(data.eventos && data.eventos.length > 0) {
+                            const ultimoStatus = data.eventos[0].status;
+                            this.modalRastreio = { aberto: true, codigo: venda.tracking_code, eventos: data.eventos };
+                            
+                            // Atualiza no banco o novo status se mudou
+                            if(ultimoStatus !== venda.tracking_status) {
+                                await _supabase.from('vendas').update({ tracking_status: ultimoStatus }).eq('id', venda.id);
+                                venda.tracking_status = ultimoStatus;
+                            }
+                        } else {
+                            this.mostrarFeedback('Aviso', 'Rastreio ainda não postado ou código inválido.');
+                        }
+                    } catch (e) {
+                        this.mostrarFeedback('Erro', 'Não foi possível consultar os Correios agora.');
+                    } finally { this.loading = false; }
+                },
+
                 async carregarTudo() {
                     this.loading = true;
                     try {
@@ -304,63 +327,55 @@
                         if(this.telaAtual === 'dashboard') this.atualizarGrafico();
                     } catch(e) { console.error(e); } finally { this.loading = false; }
                 },
+
                 async salvarProduto() {
-                    if(!this.novoProduto.nome || !this.novoProduto.custo) return;
                     this.loading = true;
                     try {
                         if (this.novoProduto.id) await _supabase.from('produtos').update(this.novoProduto).eq('id', this.novoProduto.id);
                         else await _supabase.from('produtos').insert([this.novoProduto]);
                         this.modalAberto = false; await this.carregarTudo();
-                        this.mostrarFeedback('Sucesso!', 'Os dados do perfume foram salvos no estoque.');
+                        this.mostrarFeedback('Sucesso!', 'Produto salvo.');
                     } catch(e) { console.error(e); } finally { this.loading = false; }
                 },
+
                 solicitarExclusaoProduto(id) {
-                    this.confirmDialog = { aberto: true, mensagem: 'Isso removerá o perfume definitivamente.', acaoConfirmada: async () => { this.confirmDialog.aberto = false; this.loading = true; await _supabase.from('produtos').delete().eq('id', id); await this.carregarTudo(); } };
+                    this.confirmDialog = { aberto: true, mensagem: 'Isso removerá o perfume do estoque.', acaoConfirmada: async () => { this.confirmDialog.aberto = false; this.loading = true; await _supabase.from('produtos').delete().eq('id', id); await this.carregarTudo(); } };
                 },
 
-                // --- FUNÇÃO DE VENDA CORRIGIDA PARA O ERRO NOT-NULL ---
+                // ATUALIZADO: Salva os novos campos na venda
                 async confirmarVenda() {
-                    if (!this.vendaInput.produtoId || !this.vendaInput.precoVenda || !this.produtoSelecionado) {
-                        this.mostrarFeedback('Atenção', 'Selecione um produto e insira o valor da venda.');
-                        return;
+                    if (!this.vendaInput.produtoId || !this.vendaInput.precoVenda) {
+                        this.mostrarFeedback('Atenção', 'Selecione um produto e valor.'); return;
                     }
-
                     this.loading = true;
                     try {
-                        const qtd = Math.max(1, this.vendaInput.quantidade);
+                        const qtd = this.vendaInput.quantidade;
                         const faturamentoTotal = this.vendaInput.precoVenda;
-                        const precoUnitarioVenda = faturamentoTotal / qtd;
-
-                        const custoTotal = (this.produtoSelecionado.custo || 0) * qtd;
-                        const taxaMLTotal = 60 * qtd; // Taxa fixa de 60 reais por unidade
-                        const lucroLiquido = faturamentoTotal - custoTotal - taxaMLTotal;
+                        const lucro = faturamentoTotal - (this.produtoSelecionado.custo * qtd) - (60 * qtd);
 
                         const { error } = await _supabase.from('vendas').insert([{
                             produto_id: this.vendaInput.produtoId,
                             nome_produto_snapshot: this.produtoSelecionado.nome,
                             quantidade: qtd,
-                            preco_venda_unitario: precoUnitarioVenda, // CAMPO CORRIGIDO
+                            preco_venda_unitario: faturamentoTotal / qtd,
                             faturamento_total: faturamentoTotal,
-                            lucro_liquido: lucroLiquido
+                            lucro_liquido: lucro,
+                            ml_order_id: this.vendaInput.mlOrderId, // NOVO
+                            tracking_code: this.vendaInput.trackingCode.toUpperCase(), // NOVO
+                            tracking_status: this.vendaInput.trackingCode ? 'Aguardando Postagem' : null
                         }]);
 
                         if (error) throw error;
-
-                        this.vendaInput = { produtoId: '', precoVenda: null, quantidade: 1, precoUnitarioBase: 0 };
+                        this.vendaInput = { produtoId: '', precoVenda: null, quantidade: 1, precoUnitarioBase: 0, mlOrderId: '', trackingCode: '' };
                         await this.carregarTudo();
-                        this.mostrarFeedback('Venda Registrada!', 'O dashboard foi atualizado com sucesso.');
-
-                    } catch(e) {
-                        console.error("Erro ao salvar:", e);
-                        alert("Erro de banco: " + (e.message || "Erro desconhecido"));
-                    } finally {
-                        this.loading = false;
-                    }
+                        this.mostrarFeedback('Venda Registrada!', 'Campos de ML e Rastreio salvos.');
+                    } catch(e) { alert("Erro de banco: " + e.message); } finally { this.loading = false; }
                 },
 
                 solicitarExclusaoVenda(id) {
                     this.confirmDialog = { aberto: true, mensagem: 'Deseja apagar esta venda?', acaoConfirmada: async () => { this.confirmDialog.aberto = false; this.loading = true; await _supabase.from('vendas').delete().eq('id', id); await this.carregarTudo(); } };
                 },
+
                 atualizarGrafico() {
                     const ctx = document.getElementById('pieChart');
                     if(!ctx || this.vendas.length === 0) return;
@@ -376,5 +391,4 @@
         }).mount('#app');
     </script>
 </body>
-
 </html>
