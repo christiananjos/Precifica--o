@@ -28,23 +28,13 @@
         body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
         .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
         .fade-enter-from, .fade-leave-to { opacity: 0; }
-        .slide-enter-active, .slide-leave-active { transition: transform 0.3s ease-in-out; }
-        .slide-enter-from, .slide-leave-to { transform: translateX(-100%); }
         .scale-enter-active, .scale-leave-active { transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
         .scale-enter-from, .scale-leave-to { opacity: 0; transform: scale(0.95); }
-        .input-soft { @apply w-full bg-gray-50 border-none rounded-2xl py-4 px-5 text-gray-700 font-medium focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all placeholder-gray-400 text-center; }
-        .input-modal { @apply w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-gray-800 font-semibold focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all; }
-        .input-filter { @apply bg-white border border-gray-200 rounded-xl py-2 px-4 text-sm focus:outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-500/5 transition-all w-full; }
-        .btn-primary { @apply bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-md hover:shadow-blue-500/30 transition-all transform hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2; }
-        .btn-cancel { @apply bg-slate-100 text-slate-500 font-bold py-3 px-6 rounded-xl hover:bg-slate-200 hover:text-slate-700 transition-all active:scale-95 flex items-center justify-center gap-2 border border-transparent; }
-        .btn-danger { @apply bg-red-500 text-white font-bold py-3 px-6 rounded-xl shadow-md hover:bg-red-600 transition-all active:scale-95 flex items-center justify-center gap-2; }
-        .btn-action-edit { @apply w-9 h-9 rounded-lg flex items-center justify-center bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all shadow-sm active:scale-95; }
-        .btn-action-delete { @apply w-9 h-9 rounded-lg flex items-center justify-center bg-red-50 text-red-500 hover:bg-red-100 transition-all shadow-sm active:scale-95; }
+        .input-soft { @apply w-full bg-gray-50 border-none rounded-2xl py-4 px-5 text-gray-700 font-medium focus:ring-2 focus:ring-blue-100 focus:bg-white transition-all text-center; }
+        .input-filter { @apply bg-white border border-gray-200 rounded-xl py-2 px-4 text-sm focus:border-blue-400 focus:ring-4 focus:ring-blue-500/5 transition-all w-full; }
+        .btn-primary { @apply bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-3 px-6 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2; }
         .btn-page { @apply w-10 h-10 rounded-xl flex items-center justify-center font-bold transition-all border border-gray-200 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed active:scale-90; }
-        .badge-insp { @apply text-[10px] uppercase font-bold tracking-wider px-2 py-1 rounded-md bg-purple-50 text-purple-600 border border-purple-100 inline-block max-w-[120px] truncate; }
         .badge-status { @apply text-[10px] uppercase font-bold px-2 py-1 rounded-full bg-blue-50 text-blue-600 border border-blue-100; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
     </style>
 </head>
 
@@ -77,11 +67,23 @@
                 <div class="max-w-6xl mx-auto">
                     <div v-if="loading" class="fixed top-4 right-4 bg-white px-5 py-3 rounded-full shadow-xl z-50 flex items-center gap-3 text-sm font-medium border border-gray-100 animate-pulse"><i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i>Processando...</div>
 
-                    <div v-show="telaAtual === 'dashboard'" class="animate-fade-in space-y-8">
+                    <div v-show="telaAtual === 'dashboard'" class="space-y-8 animate-fade-in">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm"><p class="text-xs text-emerald-600 font-bold uppercase mb-1">Lucro Total</p><p class="text-3xl font-bold text-gray-900">{{ formatarMoeda(kpis.lucro) }}</p></div>
                             <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm"><p class="text-xs text-blue-600 font-bold uppercase mb-1">Faturamento</p><p class="text-3xl font-bold text-gray-900">{{ formatarMoeda(kpis.faturamento) }}</p></div>
                             <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm"><p class="text-xs text-purple-600 font-bold uppercase mb-1">Vendas</p><p class="text-3xl font-bold text-gray-900">{{ kpis.qtdVendas }}</p></div>
+                        </div>
+                        <div class="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm flex flex-col lg:flex-row items-center gap-12">
+                            <div class="w-64 h-64 relative shrink-0"><canvas id="pieChart"></canvas></div>
+                            <div class="flex-1 w-full">
+                                <h3 class="text-lg font-bold text-gray-800 mb-6">Top Produtos (Lucro)</h3>
+                                <div class="space-y-3">
+                                    <div v-for="(item, idx) in dashboardData.topProdutos" :key="idx" class="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50">
+                                        <div class="flex items-center gap-3"><div class="w-3 h-3 rounded-full" :style="{backgroundColor: dashboardData.cores[idx]}"></div><span class="font-medium text-gray-700">{{ item.nome }}</span></div>
+                                        <span class="font-bold text-gray-900">{{ formatarMoeda(item.valor) }}</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -93,32 +95,17 @@
                                     <label class="text-xs font-bold text-gray-400 uppercase block mb-1">Produto</label>
                                     <select v-model="vendaInput.produtoId" class="input-soft" @change="aplicarPrecoSugerido"><option value="" disabled>Selecione...</option><option v-for="p in produtos" :key="p.id" :value="p.id">{{ p.nome }}</option></select>
                                 </div>
-                                <div>
-                                    <label class="text-xs font-bold text-yellow-600 uppercase block mb-1">Pedido Mercado Livre</label>
-                                    <input v-model="vendaInput.mlOrderId" type="text" placeholder="ID do Pedido" class="input-soft !py-3 !text-left !px-4 bg-yellow-50/30 border border-yellow-100">
-                                </div>
-                                <div>
-                                    <label class="text-xs font-bold text-blue-600 uppercase block mb-1">Rastreio Correios</label>
-                                    <input v-model="vendaInput.trackingCode" type="text" placeholder="AA123456789BR" class="input-soft !py-3 !text-left !px-4 bg-blue-50/30 border border-blue-100 uppercase">
-                                </div>
-                                <div class="md:col-span-2 text-center py-4">
-                                    <label class="text-xs font-bold text-gray-400 uppercase block mb-1">Valor Total</label>
-                                    <div class="flex items-baseline justify-center gap-1 text-gray-800"><span class="text-2xl font-bold">R$</span><input v-model.number="vendaInput.precoVenda" type="number" step="0.01" class="text-5xl font-black bg-transparent border-none text-center w-56 outline-none" placeholder="0,00"></div>
-                                </div>
-                                <div class="md:col-span-2 flex flex-col items-center">
-                                    <label class="text-xs font-bold text-gray-400 uppercase block mb-2">Quantidade</label>
-                                    <div class="flex gap-4 bg-gray-50 p-2 rounded-xl"><button @click="alterarQuantidade(-1)" class="w-10 h-10 bg-white rounded-lg shadow-sm">-</button><span class="w-10 flex items-center justify-center font-bold text-xl">{{ vendaInput.quantidade }}</span><button @click="alterarQuantidade(1)" class="w-10 h-10 bg-white rounded-lg shadow-sm">+</button></div>
-                                </div>
+                                <div><label class="text-xs font-bold text-yellow-600 uppercase block mb-1">Pedido ML</label><input v-model="vendaInput.mlOrderId" type="text" placeholder="ID Pedido" class="input-soft !py-3 !text-left !px-4 bg-yellow-50/30 border border-yellow-100"></div>
+                                <div><label class="text-xs font-bold text-blue-600 uppercase block mb-1">Rastreio</label><input v-model="vendaInput.trackingCode" type="text" placeholder="Código" class="input-soft !py-3 !text-left !px-4 bg-blue-50/30 border border-blue-100 uppercase"></div>
+                                <div class="md:col-span-2 text-center py-4"><label class="text-xs font-bold text-gray-400 uppercase block mb-1">Valor Total</label><div class="flex items-baseline justify-center gap-1 text-gray-800"><span class="text-2xl font-bold">R$</span><input v-model.number="vendaInput.precoVenda" type="number" step="0.01" class="text-5xl font-black bg-transparent border-none text-center w-56 outline-none"></div></div>
+                                <div class="md:col-span-2 flex flex-col items-center"><label class="text-xs font-bold text-gray-400 uppercase block mb-2">Quantidade</label><div class="flex gap-4 bg-gray-50 p-2 rounded-xl"><button @click="alterarQuantidade(-1)" class="w-10 h-10 bg-white rounded-lg shadow-sm">-</button><span class="w-10 flex items-center justify-center font-bold text-xl">{{ vendaInput.quantidade }}</span><button @click="alterarQuantidade(1)" class="w-10 h-10 bg-white rounded-lg shadow-sm">+</button></div></div>
                                 <button @click="confirmarVenda" :disabled="!vendaInput.produtoId || !vendaInput.precoVenda" class="md:col-span-2 btn-primary w-full py-4 text-lg mt-4">Confirmar Venda</button>
                             </div>
                         </div>
                     </div>
 
                     <div v-show="telaAtual === 'produtos'" class="animate-fade-in space-y-6">
-                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                            <h2 class="text-2xl font-bold text-gray-800">Estoque</h2>
-                            <button @click="abrirModalNovo" class="btn-primary py-2.5 px-5"><i class="fa-solid fa-plus"></i> Novo Item</button>
-                        </div>
+                        <div class="flex justify-between items-center"><h2 class="text-2xl font-bold text-gray-800">Estoque</h2><button @click="abrirModalNovo" class="btn-primary py-2.5 px-5"><i class="fa-solid fa-plus"></i> Novo Item</button></div>
                         
                         <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div class="relative"><i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-300"></i><input v-model="filtrosEstoque.termo" type="text" placeholder="Nome ou Inspiração..." class="input-filter pl-10" @input="currentPage = 1"></div>
@@ -137,16 +124,11 @@
                                         <td class="py-4 px-6"><span class="badge-insp" v-if="prod.inspiracao">{{ prod.inspiracao }}</span></td>
                                         <td class="py-4 px-6 text-sm text-right font-medium">{{ formatarMoeda(prod.custo) }}</td>
                                         <td class="py-4 px-6 text-sm font-bold text-orange-600 text-right">{{ formatarMoeda(prod.preco_suger_ml) }}</td>
-                                        <td class="py-4 px-6 text-center">
-                                            <div class="flex justify-center gap-2">
-                                                <button @click="abrirModalEdicao(prod)" class="btn-action-edit"><i class="fa-solid fa-pen text-xs"></i></button>
-                                                <button @click="solicitarExclusaoProduto(prod.id)" class="btn-action-delete"><i class="fa-solid fa-trash-can text-xs"></i></button>
-                                            </div>
-                                        </td>
+                                        <td class="py-4 px-6 text-center"><div class="flex justify-center gap-2"><button @click="abrirModalEdicao(prod)" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-pen text-xs"></i></button><button @click="solicitarExclusaoProduto(prod.id)" class="w-8 h-8 rounded-lg bg-red-50 text-red-500 flex items-center justify-center"><i class="fa-solid fa-trash-can text-xs"></i></button></div></td>
                                     </tr>
-                                    <tr v-if="produtosFiltrados.length === 0"><td colspan="5" class="py-10 text-center text-gray-400 italic">Nenhum produto encontrado.</td></tr>
                                 </tbody>
                             </table>
+
                             <div v-if="totalPages > 1" class="p-4 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between">
                                 <div class="text-xs text-gray-400">Mostrando {{ itemsRange }} de {{ produtosFiltrados.length }}</div>
                                 <div class="flex items-center gap-2">
@@ -172,20 +154,13 @@
                                         <td class="py-4 px-6">
                                             <div class="flex flex-col gap-1">
                                                 <span class="text-[10px] font-bold text-yellow-600 uppercase" v-if="venda.ml_order_id">ML: {{ venda.ml_order_id }}</span>
-                                                <div v-if="venda.tracking_code" class="flex items-center gap-2">
-                                                    <span class="text-[10px] font-bold text-blue-600 uppercase">📦 {{ venda.tracking_code }}</span>
-                                                    <button @click="atualizarRastreio(venda)" class="text-[9px] bg-blue-600 text-white px-1 rounded">Ver Status</button>
-                                                </div>
+                                                <div v-if="venda.tracking_code" class="flex items-center gap-2"><span class="text-[10px] font-bold text-blue-600 uppercase">📦 {{ venda.tracking_code }}</span><button @click="atualizarRastreio(venda)" class="text-[9px] bg-blue-600 text-white px-1 rounded">Status</button></div>
                                                 <span v-if="venda.tracking_status" class="badge-status w-max">{{ venda.tracking_status }}</span>
                                             </div>
                                         </td>
                                         <td class="py-4 px-6 text-sm text-center">{{ venda.quantidade }}</td>
                                         <td class="py-4 px-6 text-sm text-right font-bold text-emerald-600">{{ formatarMoeda(venda.lucro_liquido) }}</td>
-                                        <td class="py-4 px-6 text-center">
-                                            <div class="flex items-center justify-center gap-2">
-                                                <button @click="solicitarExclusaoVenda(venda.id)" class="text-gray-300 hover:text-red-500 transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
-                                            </div>
-                                        </td>
+                                        <td class="py-4 px-6 text-center"><button @click="solicitarExclusaoVenda(venda.id)" class="text-gray-300 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -206,39 +181,17 @@
                         <div><label class="text-xs font-bold text-gray-400 uppercase block mb-1">Custo (R$)</label><input v-model.number="novoProduto.custo" type="number" step="0.01" class="input-modal"></div>
                         <div><label class="text-xs font-bold text-orange-500 uppercase block mb-1">Sugerido ML (R$)</label><input v-model.number="novoProduto.preco_suger_ml" type="number" step="0.01" class="input-modal border-orange-100"></div>
                     </div>
-                    <div class="grid grid-cols-2 gap-4 mt-8"><button @click="modalAberto = false" class="btn-cancel">Cancelar</button><button @click="salvarProduto" class="btn-primary">Salvar</button></div>
+                    <div class="grid grid-cols-2 gap-4 mt-8"><button @click="modalAberto = false" class="bg-gray-100 py-3 rounded-xl font-bold">Cancelar</button><button @click="salvarProduto" class="btn-primary">Salvar</button></div>
                 </div>
             </div>
         </transition>
 
-        <transition name="fade">
-            <div v-if="feedback.aberto" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-                <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-xs p-8 text-center animate-scale">
-                    <div class="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl"><i class="fa-solid fa-check"></i></div>
-                    <h4 class="text-xl font-bold text-gray-800 mb-2">{{ feedback.titulo }}</h4>
-                    <p class="text-gray-500 text-sm mb-6">{{ feedback.mensagem }}</p>
-                    <button @click="feedback.aberto = false" class="btn-primary w-full py-3">Entendido</button>
-                </div>
-            </div>
-        </transition>
-
-        <transition name="fade">
-            <div v-if="confirmDialog.aberto" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-                <div class="bg-white rounded-[2rem] shadow-2xl w-full max-sm p-8 text-center animate-scale">
-                    <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl"><i class="fa-solid fa-triangle-exclamation"></i></div>
-                    <h4 class="text-xl font-bold text-gray-800 mb-2">Tem certeza?</h4>
-                    <p class="text-gray-500 text-sm mb-8">{{ confirmDialog.mensagem }}</p>
-                    <div class="grid grid-cols-2 gap-3">
-                        <button @click="confirmDialog.aberto = false" class="btn-cancel">Não</button>
-                        <button @click="confirmDialog.acaoConfirmada" class="btn-danger">Excluir</button>
-                    </div>
-                </div>
-            </div>
-        </transition>
+        <transition name="fade"><div v-if="feedback.aberto" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"><div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-xs p-8 text-center animate-scale"><div class="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl"><i class="fa-solid fa-check"></i></div><h4 class="text-xl font-bold text-gray-800 mb-2">{{ feedback.titulo }}</h4><p class="text-gray-500 text-sm mb-6">{{ feedback.mensagem }}</p><button @click="feedback.aberto = false" class="btn-primary w-full py-3">Entendido</button></div></div></transition>
+        <transition name="fade"><div v-if="confirmDialog.aberto" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"><div class="bg-white rounded-[2rem] shadow-2xl w-full max-sm p-8 text-center animate-scale"><div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl"><i class="fa-solid fa-triangle-exclamation"></i></div><h4 class="text-xl font-bold text-gray-800 mb-2">Tem certeza?</h4><p class="text-gray-500 text-sm mb-8">{{ confirmDialog.mensagem }}</p><div class="grid grid-cols-2 gap-3"><button @click="confirmDialog.aberto = false" class="bg-gray-100 py-3 rounded-xl font-bold">Não</button><button @click="confirmDialog.acaoConfirmada" class="bg-red-500 text-white py-3 rounded-xl font-bold">Excluir</button></div></div></div></transition>
     </div>
 
     <script>
-        const { createApp } = Vue;
+        const { createApp, nextTick } = Vue;
         const { createClient } = supabase;
 
         const SUPABASE_URL = 'https://ucnielenhniqsgvfmygl.supabase.co';
@@ -259,14 +212,15 @@
                     confirmDialog: { aberto: false, mensagem: '', acaoConfirmada: null }
                 }
             },
+            watch: {
+                telaAtual(t) { if (t === 'dashboard') nextTick(() => this.atualizarGrafico()); },
+                vendas() { if (this.telaAtual === 'dashboard') nextTick(() => this.atualizarGrafico()); }
+            },
             computed: {
                 tituloModal() { return this.novoProduto.id ? 'Editar Perfume' : 'Novo Perfume'; },
                 produtosFiltrados() {
-                    if (!this.produtos) return [];
                     return this.produtos.filter(p => {
-                        const termoOk = !this.filtrosEstoque.termo || 
-                            p.nome.toLowerCase().includes(this.filtrosEstoque.termo.toLowerCase()) ||
-                            (p.inspiracao && p.inspiracao.toLowerCase().includes(this.filtrosEstoque.termo.toLowerCase()));
+                        const termoOk = !this.filtrosEstoque.termo || p.nome.toLowerCase().includes(this.filtrosEstoque.termo.toLowerCase()) || (p.inspiracao && p.inspiracao.toLowerCase().includes(this.filtrosEstoque.termo.toLowerCase()));
                         const precoOk = !this.filtrosEstoque.precoMax || p.custo <= this.filtrosEstoque.precoMax;
                         return termoOk && precoOk;
                     });
@@ -290,43 +244,26 @@
             },
             methods: {
                 formatarMoeda(v) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0); },
-                navegar(t) { this.telaAtual = t; if(this.isMobile) this.menuAberto = false; if(t === 'dashboard') setTimeout(() => this.atualizarGrafico(), 300); },
-                mudarPagina(dir) { if(this.currentPage + dir >= 1 && this.currentPage + dir <= this.totalPages) this.currentPage += dir; },
+                navegar(t) { this.telaAtual = t; if(this.isMobile) this.menuAberto = false; },
+                mudarPagina(dir) { this.currentPage += dir; },
                 limparFiltros() { this.filtrosEstoque.termo = ''; this.filtrosEstoque.precoMax = null; this.currentPage = 1; },
                 mostrarFeedback(titulo, msg) { this.feedback = { aberto: true, titulo, mensagem: msg }; },
-                
                 abrirModalNovo() { this.novoProduto = { id: null, nome: '', custo: null, inspiracao: '', preco_suger_ml: null }; this.modalAberto = true; },
                 abrirModalEdicao(p) { this.novoProduto = { ...p }; this.modalAberto = true; },
-                
-                aplicarPrecoSugerido() {
-                    if(this.produtoSelecionado) {
-                        this.vendaInput.precoUnitarioBase = this.produtoSelecionado.preco_suger_ml || 0;
-                        this.vendaInput.precoVenda = this.vendaInput.precoUnitarioBase * this.vendaInput.quantidade;
-                    }
-                },
-                alterarQuantidade(val) {
-                    if(this.vendaInput.quantidade + val >= 1) {
-                        this.vendaInput.quantidade += val;
-                        this.vendaInput.precoVenda = (this.vendaInput.precoUnitarioBase || 0) * this.vendaInput.quantidade;
-                    }
-                },
+                aplicarPrecoSugerido() { if(this.produtoSelecionado) { this.vendaInput.precoUnitarioBase = this.produtoSelecionado.preco_suger_ml || 0; this.vendaInput.precoVenda = this.vendaInput.precoUnitarioBase * this.vendaInput.quantidade; } },
+                alterarQuantidade(val) { if(this.vendaInput.quantidade + val >= 1) { this.vendaInput.quantidade += val; this.vendaInput.precoVenda = (this.vendaInput.precoUnitarioBase || 0) * this.vendaInput.quantidade; } },
+
                 async carregarTudo() {
                     this.loading = true;
                     try {
-                        const { data: p, error: ep } = await _supabase.from('produtos').select('*').order('nome');
-                        if (ep) throw ep;
+                        const { data: p } = await _supabase.from('produtos').select('*').order('nome');
                         this.produtos = p || [];
-                        
-                        const { data: v, error: ev } = await _supabase.from('vendas').select('*').order('created_at', { ascending: false });
-                        if (ev) throw ev;
+                        const { data: v } = await _supabase.from('vendas').select('*').order('created_at', { ascending: false });
                         this.vendas = v || [];
-                    } catch(e) { 
-                        console.error("Erro Supabase:", e);
-                        alert("Erro ao conectar ao banco de dados!");
-                    } finally { this.loading = false; }
+                    } catch(e) { console.error(e); } finally { this.loading = false; }
                 },
+
                 async salvarProduto() {
-                    if(!this.novoProduto.nome || !this.novoProduto.custo) return;
                     this.loading = true;
                     try {
                         if (this.novoProduto.id) await _supabase.from('produtos').update(this.novoProduto).eq('id', this.novoProduto.id);
@@ -335,41 +272,41 @@
                         this.mostrarFeedback('Sucesso!', 'Produto salvo.');
                     } catch(e) { console.error(e); } finally { this.loading = false; }
                 },
+
                 solicitarExclusaoProduto(id) {
-                    this.confirmDialog = { aberto: true, mensagem: 'Isso removerá o perfume definitivamente.', acaoConfirmada: async () => { this.confirmDialog.aberto = false; this.loading = true; await _supabase.from('produtos').delete().eq('id', id); await this.carregarTudo(); } };
+                    this.confirmDialog = { aberto: true, mensagem: 'Isso removerá o perfume do estoque.', acaoConfirmada: async () => { this.confirmDialog.aberto = false; this.loading = true; await _supabase.from('produtos').delete().eq('id', id); await this.carregarTudo(); } };
                 },
+
                 async confirmarVenda() {
                     if (!this.vendaInput.produtoId || !this.vendaInput.precoVenda) return;
                     this.loading = true;
                     try {
-                        const qtd = Math.max(1, this.vendaInput.quantidade);
-                        const faturamentoTotal = this.vendaInput.precoVenda;
-                        const custoTotal = (this.produtoSelecionado.custo || 0) * qtd;
-                        const lucro = faturamentoTotal - custoTotal - (60 * qtd);
-
-                        const { error } = await _supabase.from('vendas').insert([{
+                        const qtd = this.vendaInput.quantidade;
+                        const fat = this.vendaInput.precoVenda;
+                        const lucro = fat - (this.produtoSelecionado.custo * qtd) - (60 * qtd);
+                        await _supabase.from('vendas').insert([{
                             produto_id: this.vendaInput.produtoId,
                             nome_produto_snapshot: this.produtoSelecionado.nome,
                             quantidade: qtd,
-                            preco_venda_unitario: faturamentoTotal / qtd,
-                            faturamento_total: faturamentoTotal,
+                            preco_venda_unitario: fat / qtd,
+                            faturamento_total: fat,
                             lucro_liquido: lucro,
                             ml_order_id: this.vendaInput.mlOrderId,
                             tracking_code: this.vendaInput.trackingCode.toUpperCase(),
                             tracking_status: this.vendaInput.trackingCode ? 'Postado' : ''
                         }]);
-
-                        if (error) throw error;
                         this.vendaInput = { produtoId: '', precoVenda: null, quantidade: 1, precoUnitarioBase: 0, mlOrderId: '', trackingCode: '' };
                         await this.carregarTudo();
-                        this.mostrarFeedback('Venda Registrada!', 'Dashboard atualizado.');
-                    } catch(e) { alert("Erro de banco: " + e.message); } finally { this.loading = false; }
+                        this.mostrarFeedback('Venda Registrada!', 'Dados salvos.');
+                    } catch(e) { alert("Erro: " + e.message); } finally { this.loading = false; }
                 },
+
                 solicitarExclusaoVenda(id) {
                     this.confirmDialog = { aberto: true, mensagem: 'Deseja apagar esta venda?', acaoConfirmada: async () => { this.confirmDialog.aberto = false; this.loading = true; await _supabase.from('vendas').delete().eq('id', id); await this.carregarTudo(); } };
                 },
+
                 async atualizarRastreio(venda) {
-                    this.mostrarFeedback('Consultando...', 'Buscando status nos Correios (Linkrastreio)...');
+                    this.loading = true;
                     try {
                         const res = await fetch(`https://api.linkrastreio.com.br/rastreio?id=${venda.tracking_code}`);
                         const data = await res.json();
@@ -378,7 +315,22 @@
                             await _supabase.from('vendas').update({ tracking_status: status }).eq('id', venda.id);
                             venda.tracking_status = status;
                         }
-                    } catch (e) { console.error(e); }
+                    } catch (e) { console.error(e); } finally { this.loading = false; }
+                },
+
+                atualizarGrafico() {
+                    const ctx = document.getElementById('pieChart');
+                    if(!ctx || this.vendas.length === 0) return;
+                    if(this.pieChartInstance) this.pieChartInstance.destroy();
+                    const grupos = {};
+                    this.vendas.forEach(v => { grupos[v.nome_produto_snapshot] = (grupos[v.nome_produto_snapshot] || 0) + (v.lucro_liquido || 0); });
+                    const sorted = Object.entries(grupos).sort((a,b) => b[1]-a[1]).slice(0, 5);
+                    this.dashboardData.topProdutos = sorted.map(s => ({ nome: s[0], valor: s[1] }));
+                    this.pieChartInstance = new Chart(ctx, { 
+                        type: 'doughnut', 
+                        data: { labels: sorted.map(s=>s[0]), datasets: [{ data: sorted.map(s=>s[1]), backgroundColor: this.dashboardData.cores }] }, 
+                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '70%' } 
+                    });
                 }
             },
             mounted() { this.carregarTudo(); window.addEventListener('resize', () => { this.isMobile = window.innerWidth < 1024; }); }
